@@ -105,6 +105,26 @@ describe("convertToQuiverPrompt", () => {
     ).toThrow("QuiverAI vectorize mode does not support system instructions");
   });
 
+  it("rejects vectorize prompts with an empty system message", () => {
+    const prompt = [
+      { role: "system" as const, content: "" },
+      {
+        role: "user" as const,
+        content: [
+          {
+            type: "file" as const,
+            mediaType: "image/png",
+            data: "QUJD",
+          },
+        ],
+      },
+    ];
+
+    expect(() =>
+      convertToQuiverPrompt({ prompt, operation: "vectorize" }),
+    ).toThrow("QuiverAI vectorize mode does not support system instructions");
+  });
+
   it("rejects vectorize prompts without exactly one raster image", () => {
     const prompt = [
       {

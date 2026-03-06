@@ -17,6 +17,6 @@
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "examples/**/*.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts"],
   "exclude": ["dist", "coverage", "node_modules", "tsup.config.ts"]
 }

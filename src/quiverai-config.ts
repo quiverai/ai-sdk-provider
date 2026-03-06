@@ -24,15 +24,22 @@ export type QuiverLanguageModelConfig = {
   generateId?: () => string;
 };
 
+function normalizeBaseURL(baseURL: string | undefined): string | undefined {
+  const trimmedBaseURL = baseURL?.trim();
+  return trimmedBaseURL && trimmedBaseURL.length > 0 ? trimmedBaseURL : undefined;
+}
+
 export function createQuiverConfig(
   options: QuiverProviderSettings = {},
 ): QuiverLanguageModelConfig {
   const baseURL =
-    withoutTrailingSlash(
-      loadOptionalSetting({
-        settingValue: options.baseURL,
-        environmentVariableName: "QUIVERAI_BASE_URL",
-      }),
+    normalizeBaseURL(
+      withoutTrailingSlash(
+        loadOptionalSetting({
+          settingValue: options.baseURL,
+          environmentVariableName: "QUIVERAI_BASE_URL",
+        }),
+      ),
     ) ?? "https://api.quiver.ai/v1";
 
   const providerName = options.name ?? "quiverai";

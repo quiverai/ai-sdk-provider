@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`QuiverLanguageModel > maps streaming draft/content snapshots into reasoning and text parts 1`] = `
+exports[`QuiverLanguageModel > maps QuiverAI draft deltas and content snapshots into reasoning and text parts 1`] = `
 [
   {
     "type": "stream-start",
@@ -8,9 +8,16 @@ exports[`QuiverLanguageModel > maps streaming draft/content snapshots into reaso
   },
   {
     "rawValue": {
+      "reasoning": "Legacy QuiverAI reasoning text that should be ignored.",
+      "type": "generating",
+    },
+    "type": "raw",
+  },
+  {
+    "rawValue": {
       "id": "svg-stream-1",
-      "svg": "<ignored/>",
-      "type": "reasoning",
+      "svg": "<svg>",
+      "type": "draft",
     },
     "type": "raw",
   },
@@ -20,32 +27,24 @@ exports[`QuiverLanguageModel > maps streaming draft/content snapshots into reaso
     "type": "response-metadata",
   },
   {
-    "rawValue": {
-      "id": "svg-stream-1",
-      "svg": "<svg",
-      "type": "draft",
-    },
-    "type": "raw",
-  },
-  {
     "id": "reasoning-0",
     "type": "reasoning-start",
   },
   {
-    "delta": "<svg",
+    "delta": "<svg>",
     "id": "reasoning-0",
     "type": "reasoning-delta",
   },
   {
     "rawValue": {
       "id": "svg-stream-1",
-      "svg": "<svg><path d="M0 0",
+      "svg": "<path d="M0 0",
       "type": "draft",
     },
     "type": "raw",
   },
   {
-    "delta": "><path d="M0 0",
+    "delta": "<path d="M0 0",
     "id": "reasoning-0",
     "type": "reasoning-delta",
   },
@@ -62,12 +61,12 @@ exports[`QuiverLanguageModel > maps streaming draft/content snapshots into reaso
     "type": "reasoning-end",
   },
   {
-    "id": "0",
+    "id": "reasoning-1",
     "type": "text-start",
   },
   {
     "delta": "<svg>",
-    "id": "0",
+    "id": "reasoning-1",
     "type": "text-delta",
   },
   {
@@ -85,11 +84,11 @@ exports[`QuiverLanguageModel > maps streaming draft/content snapshots into reaso
   },
   {
     "delta": "<path d="M0 0L10 10"/></svg>",
-    "id": "0",
+    "id": "reasoning-1",
     "type": "text-delta",
   },
   {
-    "id": "0",
+    "id": "reasoning-1",
     "type": "text-end",
   },
   {
@@ -120,7 +119,7 @@ exports[`QuiverLanguageModel > maps streaming draft/content snapshots into reaso
 ]
 `;
 
-exports[`QuiverLanguageModel > restarts the active reasoning or text block when snapshots reset 1`] = `
+exports[`QuiverLanguageModel > restarts the active text block when content snapshots reset 1`] = `
 [
   {
     "type": "stream-start",
@@ -132,24 +131,16 @@ exports[`QuiverLanguageModel > restarts the active reasoning or text block when 
     "type": "response-metadata",
   },
   {
-    "id": "reasoning-1",
-    "type": "reasoning-start",
-  },
-  {
-    "delta": "<svg><circle",
-    "id": "reasoning-1",
-    "type": "reasoning-delta",
-  },
-  {
-    "id": "reasoning-1",
-    "type": "reasoning-end",
-  },
-  {
     "id": "reasoning-2",
     "type": "reasoning-start",
   },
   {
-    "delta": "<svg><rect width="10"/></svg>",
+    "delta": "<svg>",
+    "id": "reasoning-2",
+    "type": "reasoning-delta",
+  },
+  {
+    "delta": "<rect width="10"/>",
     "id": "reasoning-2",
     "type": "reasoning-delta",
   },
@@ -158,29 +149,29 @@ exports[`QuiverLanguageModel > restarts the active reasoning or text block when 
     "type": "reasoning-end",
   },
   {
-    "id": "0",
+    "id": "reasoning-3",
     "type": "text-start",
   },
   {
     "delta": "<svg><path d="M0 0"/></svg>",
-    "id": "0",
+    "id": "reasoning-3",
     "type": "text-delta",
   },
   {
-    "id": "0",
+    "id": "reasoning-3",
     "type": "text-end",
   },
   {
-    "id": "0",
+    "id": "reasoning-4",
     "type": "text-start",
   },
   {
-    "delta": "<svg><path d="M0 0"/><path d="M1 1"/></svg>",
-    "id": "0",
+    "delta": "<svg><path d="M1 1"/></svg>",
+    "id": "reasoning-4",
     "type": "text-delta",
   },
   {
-    "id": "0",
+    "id": "reasoning-4",
     "type": "text-end",
   },
   {

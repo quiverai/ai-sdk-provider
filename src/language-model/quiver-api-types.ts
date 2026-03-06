@@ -23,10 +23,11 @@ export const svgResponseSchema = z.object({
 export type SvgResponse = z.infer<typeof svgResponseSchema>;
 
 export const svgStreamChunkSchema = z.object({
-  type: z.enum(["reasoning", "draft", "content"]),
-  id: z.string().min(1),
+  type: z.enum(["reasoning", "generating", "draft", "content"]),
+  id: z.string().min(1).optional(),
   svg: z.string().default(""),
   text: z.string().optional(),
+  reasoning: z.string().optional(),
   usage: svgUsageSchema.optional(),
 });
 

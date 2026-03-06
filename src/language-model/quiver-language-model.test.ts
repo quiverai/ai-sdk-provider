@@ -254,7 +254,7 @@ describe("QuiverLanguageModel", () => {
     );
   });
 
-  it("maps streaming draft/content snapshots into reasoning and text parts", async () => {
+  it("maps QuiverAI draft deltas and content snapshots into reasoning and text parts", async () => {
     server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
       type: "stream-chunks",
       chunks: generateStreamChunksFixture,
@@ -292,7 +292,7 @@ describe("QuiverLanguageModel", () => {
     });
   });
 
-  it("restarts the active reasoning or text block when snapshots reset", async () => {
+  it("restarts the active text block when content snapshots reset", async () => {
     server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
       type: "stream-chunks",
       chunks: resetStreamChunksFixture,

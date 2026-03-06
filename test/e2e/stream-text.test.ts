@@ -24,7 +24,7 @@ const server = createTestServer({
 void server;
 
 describe("streamText e2e", () => {
-  it("maps draft snapshots to reasoning and content snapshots to text", async () => {
+  it("maps draft deltas to reasoning and content snapshots to text", async () => {
     const provider = createQuiver({ apiKey: "test-api-key", fetch });
     const result = streamText({
       model: provider("quiver-svg"),

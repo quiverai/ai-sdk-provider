@@ -204,7 +204,7 @@ export function extractSvgText(response: SvgResponse): string {
   if (response.data.length < 1) {
     throw new InvalidArgumentError({
       argument: "response.data",
-      message: "Quiver provider received a response without any SVG outputs.",
+      message: "QuiverAI provider received a response without any SVG outputs.",
     });
   }
 
@@ -238,8 +238,7 @@ export function createV3StreamTransformer({
   let usage: SvgUsage | undefined;
   let sentResponseMetadata = false;
   let activeReasoningId: string | null = null;
-  let activeText = false;
-  let reasoningSnapshot = "";
+  let activeTextId: string | null = null;
   let textSnapshot = "";
 
   return new TransformStream<
@@ -262,7 +261,7 @@ export function createV3StreamTransformer({
 
       const value = chunk.value;
 
-      if (!sentResponseMetadata) {
+      if (!sentResponseMetadata && value.id != null) {
         sentResponseMetadata = true;
         controller.enqueue({
           type: "response-metadata",
@@ -271,24 +270,17 @@ export function createV3StreamTransformer({
         });
       }
 
-      // QuiverAI is deprecating dedicated reasoning events. We intentionally map
-      // `draft` snapshots to AI SDK reasoning and `content` snapshots to text,
-      // per provider guidance, and ignore legacy `reasoning` events.
-      if (value.type === "reasoning") {
+      // QuiverAI guidance is to map `draft` SVG deltas to AI SDK reasoning and
+      // `content` SVG snapshots to AI SDK text. Dedicated reasoning/generating
+      // events are transitional and intentionally ignored here.
+      if (value.type === "reasoning" || value.type === "generating") {
         return;
       }
 
       if (value.type === "draft") {
-        const diff = getSnapshotDelta(reasoningSnapshot, value.svg);
-
-        if (activeText) {
-          controller.enqueue({ type: "text-end", id: "0" });
-          activeText = false;
-        }
-
-        if (diff.reset && activeReasoningId != null) {
-          controller.enqueue({ type: "reasoning-end", id: activeReasoningId });
-          activeReasoningId = null;
+        if (activeTextId != null) {
+          controller.enqueue({ type: "text-end", id: activeTextId });
+          activeTextId = null;
         }
 
         if (activeReasoningId == null) {
@@ -299,15 +291,14 @@ export function createV3StreamTransformer({
           });
         }
 
-        if (diff.delta.length > 0) {
+        if (value.svg.length > 0) {
           controller.enqueue({
             type: "reasoning-delta",
             id: activeReasoningId,
-            delta: diff.delta,
+            delta: value.svg,
           });
         }
 
-        reasoningSnapshot = value.svg;
         return;
       }
 
@@ -319,20 +310,20 @@ export function createV3StreamTransformer({
         activeReasoningId = null;
       }
 
-      if (diff.reset && activeText) {
-        controller.enqueue({ type: "text-end", id: "0" });
-        activeText = false;
+      if (diff.reset && activeTextId != null) {
+        controller.enqueue({ type: "text-end", id: activeTextId });
+        activeTextId = null;
       }
 
-      if (!activeText) {
-        controller.enqueue({ type: "text-start", id: "0" });
-        activeText = true;
+      if (activeTextId == null) {
+        activeTextId = generateId();
+        controller.enqueue({ type: "text-start", id: activeTextId });
       }
 
       if (diff.delta.length > 0) {
         controller.enqueue({
           type: "text-delta",
-          id: "0",
+          id: activeTextId,
           delta: diff.delta,
         });
       }
@@ -345,8 +336,8 @@ export function createV3StreamTransformer({
         controller.enqueue({ type: "reasoning-end", id: activeReasoningId });
       }
 
-      if (activeText) {
-        controller.enqueue({ type: "text-end", id: "0" });
+      if (activeTextId != null) {
+        controller.enqueue({ type: "text-end", id: activeTextId });
       }
 
       controller.enqueue({
@@ -372,8 +363,7 @@ export function createV2StreamTransformer({
   let usage: SvgUsage | undefined;
   let sentResponseMetadata = false;
   let activeReasoningId: string | null = null;
-  let activeText = false;
-  let reasoningSnapshot = "";
+  let activeTextId: string | null = null;
   let textSnapshot = "";
 
   return new TransformStream<
@@ -396,7 +386,7 @@ export function createV2StreamTransformer({
 
       const value = chunk.value;
 
-      if (!sentResponseMetadata) {
+      if (!sentResponseMetadata && value.id != null) {
         sentResponseMetadata = true;
         controller.enqueue({
           type: "response-metadata",
@@ -405,24 +395,17 @@ export function createV2StreamTransformer({
         });
       }
 
-      // QuiverAI is deprecating dedicated reasoning events. We intentionally map
-      // `draft` snapshots to AI SDK reasoning and `content` snapshots to text,
-      // per provider guidance, and ignore legacy `reasoning` events.
-      if (value.type === "reasoning") {
+      // QuiverAI guidance is to map `draft` SVG deltas to AI SDK reasoning and
+      // `content` SVG snapshots to AI SDK text. Dedicated reasoning/generating
+      // events are transitional and intentionally ignored here.
+      if (value.type === "reasoning" || value.type === "generating") {
         return;
       }
 
       if (value.type === "draft") {
-        const diff = getSnapshotDelta(reasoningSnapshot, value.svg);
-
-        if (activeText) {
-          controller.enqueue({ type: "text-end", id: "0" });
-          activeText = false;
-        }
-
-        if (diff.reset && activeReasoningId != null) {
-          controller.enqueue({ type: "reasoning-end", id: activeReasoningId });
-          activeReasoningId = null;
+        if (activeTextId != null) {
+          controller.enqueue({ type: "text-end", id: activeTextId });
+          activeTextId = null;
         }
 
         if (activeReasoningId == null) {
@@ -433,15 +416,14 @@ export function createV2StreamTransformer({
           });
         }
 
-        if (diff.delta.length > 0) {
+        if (value.svg.length > 0) {
           controller.enqueue({
             type: "reasoning-delta",
             id: activeReasoningId,
-            delta: diff.delta,
+            delta: value.svg,
           });
         }
 
-        reasoningSnapshot = value.svg;
         return;
       }
 
@@ -453,20 +435,20 @@ export function createV2StreamTransformer({
         activeReasoningId = null;
       }
 
-      if (diff.reset && activeText) {
-        controller.enqueue({ type: "text-end", id: "0" });
-        activeText = false;
+      if (diff.reset && activeTextId != null) {
+        controller.enqueue({ type: "text-end", id: activeTextId });
+        activeTextId = null;
       }
 
-      if (!activeText) {
-        controller.enqueue({ type: "text-start", id: "0" });
-        activeText = true;
+      if (activeTextId == null) {
+        activeTextId = generateId();
+        controller.enqueue({ type: "text-start", id: activeTextId });
       }
 
       if (diff.delta.length > 0) {
         controller.enqueue({
           type: "text-delta",
-          id: "0",
+          id: activeTextId,
           delta: diff.delta,
         });
       }
@@ -479,8 +461,8 @@ export function createV2StreamTransformer({
         controller.enqueue({ type: "reasoning-end", id: activeReasoningId });
       }
 
-      if (activeText) {
-        controller.enqueue({ type: "text-end", id: "0" });
+      if (activeTextId != null) {
+        controller.enqueue({ type: "text-end", id: activeTextId });
       }
 
       controller.enqueue({
@@ -517,7 +499,7 @@ function buildRequestBody({
     throw new UnsupportedFunctionalityError({
       functionality: "providerOptions.quiver.n>1 for streaming",
       message:
-        "Quiver streaming currently supports only a single output. Use generateText with providerOptions.quiver.n for multiple outputs.",
+        "QuiverAI streaming currently supports only a single output. Use generateText with providerOptions.quiver.n for multiple outputs.",
     });
   }
 
@@ -534,7 +516,7 @@ function buildRequestBody({
       throw new InvalidArgumentError({
         argument: "providerOptions.quiver",
         message:
-          "Quiver generate mode does not accept autoCrop or targetSize options.",
+          "QuiverAI generate mode does not accept autoCrop or targetSize options.",
       });
     }
 
@@ -583,7 +565,7 @@ async function parseQuiverOptions({
     throw new InvalidArgumentError({
       argument: "providerOptions.quiver.operation",
       message:
-        'Quiver requires providerOptions.quiver.operation to be set to "generate" or "vectorize".',
+        'QuiverAI requires providerOptions.quiver.operation to be set to "generate" or "vectorize".',
     });
   }
 
@@ -642,21 +624,21 @@ function validateUnsupportedFeatures(
   if (options.tools != null && options.tools.length > 0) {
     throw new UnsupportedFunctionalityError({
       functionality: "tools",
-      message: "Quiver does not support tools or tool calling.",
+      message: "QuiverAI does not support tools or tool calling.",
     });
   }
 
   if (options.toolChoice != null) {
     throw new UnsupportedFunctionalityError({
       functionality: "toolChoice",
-      message: "Quiver does not support tool choice configuration.",
+      message: "QuiverAI does not support tool choice configuration.",
     });
   }
 
   if (options.responseFormat?.type === "json") {
     throw new UnsupportedFunctionalityError({
       functionality: "responseFormat.json",
-      message: "Quiver only returns SVG text and does not support JSON mode.",
+      message: "QuiverAI only returns SVG text and does not support JSON mode.",
     });
   }
 }

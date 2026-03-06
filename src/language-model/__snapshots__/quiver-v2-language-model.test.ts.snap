@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`QuiverV2LanguageModel > maps stream parts into V2 reasoning/text deltas 1`] = `
+exports[`QuiverV2LanguageModel > maps QuiverAI stream parts into V2 reasoning/text deltas 1`] = `
 [
   {
     "type": "stream-start",
@@ -8,9 +8,16 @@ exports[`QuiverV2LanguageModel > maps stream parts into V2 reasoning/text deltas
   },
   {
     "rawValue": {
+      "reasoning": "Legacy QuiverAI reasoning text that should be ignored.",
+      "type": "generating",
+    },
+    "type": "raw",
+  },
+  {
+    "rawValue": {
       "id": "svg-stream-1",
-      "svg": "<ignored/>",
-      "type": "reasoning",
+      "svg": "<svg>",
+      "type": "draft",
     },
     "type": "raw",
   },
@@ -20,32 +27,24 @@ exports[`QuiverV2LanguageModel > maps stream parts into V2 reasoning/text deltas
     "type": "response-metadata",
   },
   {
-    "rawValue": {
-      "id": "svg-stream-1",
-      "svg": "<svg",
-      "type": "draft",
-    },
-    "type": "raw",
-  },
-  {
     "id": "reasoning-v2-0",
     "type": "reasoning-start",
   },
   {
-    "delta": "<svg",
+    "delta": "<svg>",
     "id": "reasoning-v2-0",
     "type": "reasoning-delta",
   },
   {
     "rawValue": {
       "id": "svg-stream-1",
-      "svg": "<svg><path d="M0 0",
+      "svg": "<path d="M0 0",
       "type": "draft",
     },
     "type": "raw",
   },
   {
-    "delta": "><path d="M0 0",
+    "delta": "<path d="M0 0",
     "id": "reasoning-v2-0",
     "type": "reasoning-delta",
   },
@@ -62,12 +61,12 @@ exports[`QuiverV2LanguageModel > maps stream parts into V2 reasoning/text deltas
     "type": "reasoning-end",
   },
   {
-    "id": "0",
+    "id": "reasoning-v2-1",
     "type": "text-start",
   },
   {
     "delta": "<svg>",
-    "id": "0",
+    "id": "reasoning-v2-1",
     "type": "text-delta",
   },
   {
@@ -85,11 +84,11 @@ exports[`QuiverV2LanguageModel > maps stream parts into V2 reasoning/text deltas
   },
   {
     "delta": "<path d="M0 0L10 10"/></svg>",
-    "id": "0",
+    "id": "reasoning-v2-1",
     "type": "text-delta",
   },
   {
-    "id": "0",
+    "id": "reasoning-v2-1",
     "type": "text-end",
   },
   {

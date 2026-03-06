@@ -52,19 +52,18 @@ export const multiOutputSvgResponseFixture = {
 
 export const generateStreamChunksFixture = [
   toSseChunk({
-    type: "reasoning",
-    id: "svg-stream-1",
-    svg: "<ignored/>",
+    type: "generating",
+    reasoning: "Legacy QuiverAI reasoning text that should be ignored.",
   }),
   toSseChunk({
     type: "draft",
     id: "svg-stream-1",
-    svg: "<svg",
+    svg: "<svg>",
   }),
   toSseChunk({
     type: "draft",
     id: "svg-stream-1",
-    svg: '<svg><path d="M0 0',
+    svg: '<path d="M0 0',
   }),
   toSseChunk({
     type: "content",
@@ -85,14 +84,18 @@ export const generateStreamChunksFixture = [
 
 export const resetStreamChunksFixture = [
   toSseChunk({
-    type: "draft",
-    id: "svg-stream-reset",
-    svg: "<svg><circle",
+    type: "generating",
+    reasoning: "Legacy QuiverAI reasoning text that should be ignored.",
   }),
   toSseChunk({
     type: "draft",
     id: "svg-stream-reset",
-    svg: '<svg><rect width="10"/></svg>',
+    svg: "<svg>",
+  }),
+  toSseChunk({
+    type: "draft",
+    id: "svg-stream-reset",
+    svg: '<rect width="10"/>',
   }),
   toSseChunk({
     type: "content",
@@ -107,7 +110,7 @@ export const resetStreamChunksFixture = [
   toSseChunk({
     type: "content",
     id: "svg-stream-reset",
-    svg: '<svg><path d="M0 0"/><path d="M1 1"/></svg>',
+    svg: '<svg><path d="M1 1"/></svg>',
   }),
 ];
 

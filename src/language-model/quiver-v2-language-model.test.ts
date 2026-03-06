@@ -125,7 +125,7 @@ describe("QuiverV2LanguageModel", () => {
     });
   });
 
-  it("maps stream parts into V2 reasoning/text deltas", async () => {
+  it("maps QuiverAI stream parts into V2 reasoning/text deltas", async () => {
     server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
       type: "stream-chunks",
       chunks: generateStreamChunksFixture,

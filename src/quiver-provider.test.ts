@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { generateSvgResponseFixture } from "./language-model/__fixtures__/quiver-fixtures";
 import { createQuiver } from "./quiver-provider";
 
+const encoder = new TextEncoder();
+
 const server = createTestServer({
   "https://api.quiver.ai/v1/svgs/generations": {
     response: {
@@ -50,6 +52,11 @@ describe("createQuiver", () => {
 
     expect(result.content).toEqual([
       { type: "text", text: generateSvgResponseFixture.data[0].svg },
+      {
+        type: "file",
+        mediaType: "image/svg+xml",
+        data: encoder.encode(generateSvgResponseFixture.data[0].svg),
+      },
     ]);
     expect(server.calls).toHaveLength(1);
     expect(server.calls[0].requestUrl).toBe(

@@ -18,6 +18,11 @@ exports[`QuiverV2LanguageModel > maps QuiverAI stream parts into V2 reasoning/te
       "id": "svg-stream-1",
       "svg": "<svg>",
       "type": "draft",
+      "usage": {
+        "input_tokens": 2,
+        "output_tokens": 2,
+        "total_tokens": 4,
+      },
     },
     "type": "raw",
   },

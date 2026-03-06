@@ -44,6 +44,11 @@ describe("generateText e2e", () => {
     });
 
     expect(result.text).toBe(generateSvgResponseFixture.data[0].svg);
+    expect(result.files).toHaveLength(1);
+    expect(result.files[0].mediaType).toBe("image/svg+xml");
+    expect(new TextDecoder().decode(result.files[0].uint8Array)).toBe(
+      generateSvgResponseFixture.data[0].svg,
+    );
     expect(result.finishReason).toBe("stop");
   });
 
@@ -71,6 +76,8 @@ describe("generateText e2e", () => {
     });
 
     expect(result.text).toBe(vectorizeSvgResponseFixture.data[0].svg);
+    expect(result.files).toHaveLength(1);
+    expect(result.files[0].mediaType).toBe("image/svg+xml");
   });
 
   it("supports the V2 provider export in generateText", async () => {

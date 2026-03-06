@@ -1,4 +1,5 @@
 import {
+  LanguageModelV3Content,
   LanguageModelV3,
   LanguageModelV3CallOptions,
   LanguageModelV3GenerateResult,
@@ -58,8 +59,10 @@ export class QuiverLanguageModel implements LanguageModelV3 {
       abortSignal: options.abortSignal,
     });
 
+    const svg = extractSvgText(response);
+
     return {
-      content: [{ type: "text", text: extractSvgText(response) }],
+      content: getOutputContent(svg),
       finishReason: mapQuiverFinishReasonV3(),
       usage: convertQuiverUsageV3(response.usage),
       request: { body },
@@ -106,4 +109,15 @@ export class QuiverLanguageModel implements LanguageModelV3 {
       response: { headers: responseHeaders },
     };
   }
+}
+
+function getOutputContent(svg: string): LanguageModelV3Content[] {
+  return [
+    { type: "text", text: svg },
+    {
+      type: "file",
+      mediaType: "image/svg+xml",
+      data: new TextEncoder().encode(svg),
+    },
+  ];
 }

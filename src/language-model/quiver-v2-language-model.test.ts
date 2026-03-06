@@ -14,7 +14,9 @@ import {
   generateStreamChunksFixture,
   generateSvgResponseFixture,
   malformedSvgResponseFixture,
+  malformedStreamChunksFixture,
   multiOutputSvgResponseFixture,
+  nonContentUsageStreamChunksFixture,
 } from "./__fixtures__/quiver-fixtures";
 import { QuiverV2LanguageModel } from "./quiver-v2-language-model";
 
@@ -168,5 +170,53 @@ describe("QuiverV2LanguageModel", () => {
         );
       },
     );
+  });
+
+  it("preserves usage reported on non-content stream chunks", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "stream-chunks",
+      chunks: nonContentUsageStreamChunksFixture,
+    };
+
+    const result = await model.doStream(generateOptions);
+    const parts = await convertReadableStreamToArray(result.stream);
+
+    expect(parts[parts.length - 1]).toEqual({
+      type: "finish",
+      finishReason: "stop",
+      usage: {
+        cachedInputTokens: undefined,
+        inputTokens: 5,
+        outputTokens: 6,
+        reasoningTokens: undefined,
+        totalTokens: 11,
+      },
+    });
+  });
+
+  it("finishes streams with an error reason when SSE parsing fails", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "stream-chunks",
+      chunks: malformedStreamChunksFixture,
+    };
+
+    const result = await model.doStream(generateOptions);
+    const parts = await convertReadableStreamToArray(result.stream);
+
+    expect(parts).toContainEqual({
+      type: "error",
+      error: expect.anything(),
+    });
+    expect(parts[parts.length - 1]).toEqual({
+      type: "finish",
+      finishReason: "error",
+      usage: {
+        cachedInputTokens: undefined,
+        inputTokens: undefined,
+        outputTokens: undefined,
+        reasoningTokens: undefined,
+        totalTokens: undefined,
+      },
+    });
   });
 });

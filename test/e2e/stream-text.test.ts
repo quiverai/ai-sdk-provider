@@ -38,6 +38,9 @@ describe("streamText e2e", () => {
 
     expect(await result.text).toBe('<svg><path d="M0 0L10 10"/></svg>');
     expect(await result.reasoningText).toBe('<svg><path d="M0 0');
+    const files = await result.files;
+    expect(files).toHaveLength(1);
+    expect(files[0].mediaType).toBe("image/svg+xml");
   });
 
   it("streams vectorized SVG text", async () => {
@@ -66,5 +69,8 @@ describe("streamText e2e", () => {
     expect(await result.text).toBe(
       '<svg viewBox="0 0 4 4"><path d="M0 0L4 4"/></svg>',
     );
+    const files = await result.files;
+    expect(files).toHaveLength(1);
+    expect(files[0].mediaType).toBe("image/svg+xml");
   });
 });

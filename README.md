@@ -1,3 +1,71 @@
 # @quiverai/vercel-ai-provider
 
-Quiver provider for the Vercel AI SDK.
+QuiverAI provider for the Vercel AI SDK.
+
+## Installation
+
+```bash
+pnpm add ai @quiverai/vercel-ai-provider
+```
+
+## Setup
+
+Set your QuiverAI API key:
+
+```bash
+export QUIVER_API_KEY=your_api_key
+```
+
+Optional environment variables:
+
+- `QUIVER_BASE_URL` to override the default `https://api.quiver.ai/v1`
+- `QUIVER_MODEL_ID` to override the default example model `arrow-preview`
+
+## Usage
+
+```ts
+import { generateText } from "ai";
+import { quiver } from "@quiverai/vercel-ai-provider";
+
+const result = await generateText({
+  model: quiver("arrow-preview"),
+  prompt: "Generate a simple geometric SVG icon.",
+  providerOptions: {
+    quiver: {
+      operation: "generate",
+    },
+  },
+});
+
+console.log(result.text);
+```
+
+## QuiverAI Options
+
+Use QuiverAI-specific options through `providerOptions.quiver`:
+
+- `operation: "generate" | "vectorize"` is required
+- `n` controls non-streaming multi-output requests
+- `autoCrop` and `targetSize` are available for `vectorize`
+
+Streaming behavior is intentionally mapped as:
+
+- QuiverAI `draft` snapshots -> AI SDK reasoning
+- QuiverAI `content` snapshots -> AI SDK text
+
+Streaming currently supports only a single output. Use `generateText` with `providerOptions.quiver.n` for multi-output generation.
+
+## Examples
+
+This repo includes 4 small QuiverAI examples. They stay out of the published package and are only for local development.
+
+Run them from the repo root:
+
+```bash
+pnpm example:generate -- "Generate a simple geometric SVG icon."
+pnpm example:stream -- "Generate a simple geometric SVG icon."
+pnpm example:vectorize -- ./image.png
+pnpm example:multi-output -- "Generate two simple SVG icon variations."
+```
+
+The examples import the public package entrypoint and build the package first so they behave like normal consumer code.

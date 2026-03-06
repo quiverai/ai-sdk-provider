@@ -58,7 +58,7 @@ export function convertToQuiverPrompt({
     throw new InvalidPromptError({
       prompt,
       message:
-        "Quiver only supports a single-turn prompt with optional system and user messages.",
+        "QuiverAI only supports a single-turn prompt with optional system and user messages.",
     });
   }
 
@@ -66,7 +66,7 @@ export function convertToQuiverPrompt({
     throw new InvalidPromptError({
       prompt,
       message:
-        "Quiver requires exactly one user message and at most one system message.",
+        "QuiverAI requires exactly one user message and at most one system message.",
     });
   }
 
@@ -74,7 +74,7 @@ export function convertToQuiverPrompt({
     throw new InvalidPromptError({
       prompt,
       message:
-        "Quiver does not support multi-turn prompts or additional message roles.",
+        "QuiverAI does not support multi-turn prompts or additional message roles.",
     });
   }
 
@@ -95,14 +95,14 @@ export function convertToQuiverPrompt({
     if (textParts.length === 0) {
       throw new InvalidPromptError({
         prompt,
-        message: "Quiver generate mode requires user text input.",
+        message: "QuiverAI generate mode requires user text input.",
       });
     }
 
     if (fileParts.length > 4) {
       throw new InvalidPromptError({
         prompt,
-        message: "Quiver generate mode supports at most 4 reference images.",
+        message: "QuiverAI generate mode supports at most 4 reference images.",
       });
     }
 
@@ -123,7 +123,7 @@ export function convertToQuiverPrompt({
     throw new InvalidPromptError({
       prompt,
       message:
-        "Quiver vectorize mode does not support system instructions or user text.",
+        "QuiverAI vectorize mode does not support system instructions or user text.",
     });
   }
 
@@ -131,14 +131,15 @@ export function convertToQuiverPrompt({
     throw new InvalidPromptError({
       prompt,
       message:
-        "Quiver vectorize mode does not support system instructions or user text.",
+        "QuiverAI vectorize mode does not support system instructions or user text.",
     });
   }
 
   if (fileParts.length !== 1) {
     throw new InvalidPromptError({
       prompt,
-      message: "Quiver vectorize mode requires exactly one raster image input.",
+      message:
+        "QuiverAI vectorize mode requires exactly one raster image input.",
     });
   }
 
@@ -164,14 +165,14 @@ function convertFilePart({
   if (!part.mediaType.startsWith("image/")) {
     throw new InvalidPromptError({
       prompt: part,
-      message: `Quiver only supports image file parts, received ${part.mediaType}.`,
+      message: `QuiverAI only supports image file parts, received ${part.mediaType}.`,
     });
   }
 
   if (!allowAnyImage && !RASTER_MEDIA_TYPES.has(part.mediaType)) {
     throw new InvalidPromptError({
       prompt: part,
-      message: `Quiver ${operation} mode only supports PNG, JPEG, or WebP inputs.`,
+      message: `QuiverAI ${operation} mode only supports PNG, JPEG, or WebP inputs.`,
     });
   }
 
@@ -181,7 +182,7 @@ function convertFilePart({
     if (!/^https?:$/i.test(data.protocol)) {
       throw new InvalidArgumentError({
         argument: "file.data",
-        message: "Quiver only supports http/https file URLs.",
+        message: "QuiverAI only supports http/https file URLs.",
       });
     }
 

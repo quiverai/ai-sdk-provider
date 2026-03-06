@@ -88,7 +88,7 @@ describe("convertToQuiverPrompt", () => {
 
     expect(() =>
       convertToQuiverPrompt({ prompt, operation: "generate" }),
-    ).toThrow("Quiver generate mode requires user text input.");
+    ).toThrow("QuiverAI generate mode requires user text input.");
   });
 
   it("rejects vectorize prompts with text or system instructions", () => {
@@ -102,7 +102,7 @@ describe("convertToQuiverPrompt", () => {
 
     expect(() =>
       convertToQuiverPrompt({ prompt, operation: "vectorize" }),
-    ).toThrow("Quiver vectorize mode does not support system instructions");
+    ).toThrow("QuiverAI vectorize mode does not support system instructions");
   });
 
   it("rejects vectorize prompts without exactly one raster image", () => {
@@ -121,6 +121,8 @@ describe("convertToQuiverPrompt", () => {
 
     expect(() =>
       convertToQuiverPrompt({ prompt, operation: "vectorize" }),
-    ).toThrow("Quiver vectorize mode only supports PNG, JPEG, or WebP inputs.");
+    ).toThrow(
+      "QuiverAI vectorize mode only supports PNG, JPEG, or WebP inputs.",
+    );
   });
 });

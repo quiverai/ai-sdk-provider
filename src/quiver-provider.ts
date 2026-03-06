@@ -23,7 +23,7 @@ export function createQuiver(
   const provider = function (modelId: string) {
     if (new.target) {
       throw new Error(
-        "The Quiver model function cannot be called with the new keyword.",
+        "The QuiverAI model function cannot be called with the new keyword.",
       );
     }
 

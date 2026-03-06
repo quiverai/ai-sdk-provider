@@ -43,7 +43,7 @@ export function createQuiverConfig(
         Authorization: `Bearer ${loadApiKey({
           apiKey: options.apiKey,
           environmentVariableName: "QUIVER_API_KEY",
-          description: "Quiver",
+          description: "QuiverAI",
         })}`,
         ...options.headers,
       },

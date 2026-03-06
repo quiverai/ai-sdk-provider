@@ -372,6 +372,11 @@ describe("QuiverLanguageModel", () => {
       type: "error",
       error: expect.anything(),
     });
+    expect(parts).not.toContainEqual({
+      type: "file",
+      mediaType: "image/svg+xml",
+      data: expect.any(Uint8Array),
+    });
     expect(parts[parts.length - 1]).toEqual({
       type: "finish",
       finishReason: {

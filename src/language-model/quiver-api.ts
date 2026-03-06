@@ -343,7 +343,7 @@ export function createV3StreamTransformer({
         controller.enqueue({ type: "text-end", id: activeTextId });
       }
 
-      if (textSnapshot.length > 0) {
+      if (!sawError && textSnapshot.length > 0) {
         controller.enqueue({
           type: "file",
           mediaType: "image/svg+xml",

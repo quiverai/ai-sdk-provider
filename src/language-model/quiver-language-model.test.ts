@@ -14,7 +14,9 @@ import {
   generateStreamChunksFixture,
   generateSvgResponseFixture,
   malformedSvgResponseFixture,
+  malformedStreamChunksFixture,
   multiOutputSvgResponseFixture,
+  nonContentUsageStreamChunksFixture,
   resetStreamChunksFixture,
   vectorizeSvgResponseFixture,
 } from "./__fixtures__/quiver-fixtures";
@@ -42,6 +44,7 @@ const config = createQuiverConfig({
 });
 
 const model = new QuiverLanguageModel("quiver-svg", config);
+const encoder = new TextEncoder();
 
 const generateOptions = {
   prompt: [
@@ -70,6 +73,11 @@ describe("QuiverLanguageModel", () => {
 
     expect(result.content).toEqual([
       { type: "text", text: generateSvgResponseFixture.data[0].svg },
+      {
+        type: "file",
+        mediaType: "image/svg+xml",
+        data: encoder.encode(generateSvgResponseFixture.data[0].svg),
+      },
     ]);
     expect(result.finishReason).toEqual({ raw: "stop", unified: "stop" });
     expect(result.usage).toEqual({
@@ -151,6 +159,11 @@ describe("QuiverLanguageModel", () => {
 
     expect(result.content).toEqual([
       { type: "text", text: vectorizeSvgResponseFixture.data[0].svg },
+      {
+        type: "file",
+        mediaType: "image/svg+xml",
+        data: encoder.encode(vectorizeSvgResponseFixture.data[0].svg),
+      },
     ]);
     expect(await server.calls[0].requestBodyJson).toEqual({
       model: "quiver-svg",
@@ -201,6 +214,11 @@ describe("QuiverLanguageModel", () => {
 
     expect(result.content).toEqual([
       { type: "text", text: multiOutputSvgResponseFixture.data[0].svg },
+      {
+        type: "file",
+        mediaType: "image/svg+xml",
+        data: encoder.encode(multiOutputSvgResponseFixture.data[0].svg),
+      },
     ]);
     expect(result.providerMetadata).toEqual({
       quiver: {
@@ -302,5 +320,83 @@ describe("QuiverLanguageModel", () => {
     const parts = await convertReadableStreamToArray(result.stream);
 
     expect(parts).toMatchSnapshot();
+  });
+
+  it("preserves usage reported on non-content stream chunks", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "stream-chunks",
+      chunks: nonContentUsageStreamChunksFixture,
+    };
+
+    const result = await model.doStream(generateOptions);
+    const parts = await convertReadableStreamToArray(result.stream);
+    const finish = parts[parts.length - 1];
+
+    expect(finish).toEqual({
+      type: "finish",
+      finishReason: {
+        raw: "stop",
+        unified: "stop",
+      },
+      usage: {
+        inputTokens: {
+          total: 5,
+          noCache: 5,
+          cacheRead: undefined,
+          cacheWrite: undefined,
+        },
+        outputTokens: {
+          total: 6,
+          text: 6,
+          reasoning: undefined,
+        },
+        raw: {
+          total_tokens: 11,
+          input_tokens: 5,
+          output_tokens: 6,
+        },
+      },
+    });
+  });
+
+  it("finishes streams with an error reason when SSE parsing fails", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "stream-chunks",
+      chunks: malformedStreamChunksFixture,
+    };
+
+    const result = await model.doStream(generateOptions);
+    const parts = await convertReadableStreamToArray(result.stream);
+
+    expect(parts).toContainEqual({
+      type: "error",
+      error: expect.anything(),
+    });
+    expect(parts).not.toContainEqual({
+      type: "file",
+      mediaType: "image/svg+xml",
+      data: expect.any(Uint8Array),
+    });
+    expect(parts[parts.length - 1]).toEqual({
+      type: "finish",
+      finishReason: {
+        raw: "error",
+        unified: "error",
+      },
+      usage: {
+        inputTokens: {
+          total: undefined,
+          noCache: undefined,
+          cacheRead: undefined,
+          cacheWrite: undefined,
+        },
+        outputTokens: {
+          total: undefined,
+          text: undefined,
+          reasoning: undefined,
+        },
+        raw: undefined,
+      },
+    });
   });
 });

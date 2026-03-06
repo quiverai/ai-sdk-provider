@@ -7,7 +7,7 @@ export function mapQuiverFinishReasonV3(
   raw: string | undefined = "stop",
 ): LanguageModelV3FinishReason {
   return {
-    unified: raw === "stop" ? "stop" : "other",
+    unified: mapFinishReason(raw),
     raw,
   };
 }
@@ -15,5 +15,21 @@ export function mapQuiverFinishReasonV3(
 export function mapQuiverFinishReasonV2(
   raw: string | undefined = "stop",
 ): LanguageModelV2FinishReason {
-  return raw === "stop" ? "stop" : "other";
+  return raw == null ? "unknown" : mapFinishReason(raw);
+}
+
+function mapFinishReason(
+  raw: string,
+): Exclude<LanguageModelV2FinishReason, "unknown"> {
+  switch (raw) {
+    case "stop":
+    case "length":
+    case "content-filter":
+    case "tool-calls":
+    case "error":
+    case "other":
+      return raw;
+    default:
+      return "other";
+  }
 }

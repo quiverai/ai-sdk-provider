@@ -59,6 +59,11 @@ export const generateStreamChunksFixture = [
     type: "draft",
     id: "svg-stream-1",
     svg: "<svg>",
+    usage: {
+      total_tokens: 4,
+      input_tokens: 2,
+      output_tokens: 2,
+    },
   }),
   toSseChunk({
     type: "draft",
@@ -80,6 +85,33 @@ export const generateStreamChunksFixture = [
       output_tokens: 15,
     },
   }),
+];
+
+export const nonContentUsageStreamChunksFixture = [
+  toSseChunk({
+    type: "draft",
+    id: "svg-stream-usage",
+    svg: "<svg><path",
+    usage: {
+      total_tokens: 11,
+      input_tokens: 5,
+      output_tokens: 6,
+    },
+  }),
+  toSseChunk({
+    type: "content",
+    id: "svg-stream-usage",
+    svg: '<svg><path d="M0 0L1 1"/></svg>',
+  }),
+];
+
+export const malformedStreamChunksFixture = [
+  toSseChunk({
+    type: "content",
+    id: "svg-stream-malformed",
+    svg: "<svg>",
+  }),
+  'data: {"oops":true}\n\n',
 ];
 
 export const resetStreamChunksFixture = [

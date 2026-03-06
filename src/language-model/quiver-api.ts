@@ -240,6 +240,7 @@ export function createV3StreamTransformer({
   let activeReasoningId: string | null = null;
   let activeTextId: string | null = null;
   let textSnapshot = "";
+  let sawError = false;
 
   return new TransformStream<
     ParseResult<SvgStreamChunk>,
@@ -255,11 +256,13 @@ export function createV3StreamTransformer({
       }
 
       if (!chunk.success) {
+        sawError = true;
         controller.enqueue({ type: "error", error: chunk.error });
         return;
       }
 
       const value = chunk.value;
+      usage = value.usage ?? usage;
 
       if (!sentResponseMetadata && value.id != null) {
         sentResponseMetadata = true;
@@ -303,7 +306,6 @@ export function createV3StreamTransformer({
         return;
       }
 
-      usage = value.usage ?? usage;
       const diff = getSnapshotDelta(textSnapshot, value.svg);
 
       if (activeReasoningId != null) {
@@ -341,9 +343,17 @@ export function createV3StreamTransformer({
         controller.enqueue({ type: "text-end", id: activeTextId });
       }
 
+      if (!sawError && textSnapshot.length > 0) {
+        controller.enqueue({
+          type: "file",
+          mediaType: "image/svg+xml",
+          data: new TextEncoder().encode(textSnapshot),
+        });
+      }
+
       controller.enqueue({
         type: "finish",
-        finishReason: mapQuiverFinishReasonV3(),
+        finishReason: mapQuiverFinishReasonV3(sawError ? "error" : "stop"),
         usage: convertQuiverUsageV3(usage),
       });
     },
@@ -366,6 +376,7 @@ export function createV2StreamTransformer({
   let activeReasoningId: string | null = null;
   let activeTextId: string | null = null;
   let textSnapshot = "";
+  let sawError = false;
 
   return new TransformStream<
     ParseResult<SvgStreamChunk>,
@@ -381,11 +392,13 @@ export function createV2StreamTransformer({
       }
 
       if (!chunk.success) {
+        sawError = true;
         controller.enqueue({ type: "error", error: chunk.error });
         return;
       }
 
       const value = chunk.value;
+      usage = value.usage ?? usage;
 
       if (!sentResponseMetadata && value.id != null) {
         sentResponseMetadata = true;
@@ -429,7 +442,6 @@ export function createV2StreamTransformer({
         return;
       }
 
-      usage = value.usage ?? usage;
       const diff = getSnapshotDelta(textSnapshot, value.svg);
 
       if (activeReasoningId != null) {
@@ -469,7 +481,7 @@ export function createV2StreamTransformer({
 
       controller.enqueue({
         type: "finish",
-        finishReason: mapQuiverFinishReasonV2(),
+        finishReason: mapQuiverFinishReasonV2(sawError ? "error" : "stop"),
         usage: convertQuiverUsageV2(usage),
       });
     },

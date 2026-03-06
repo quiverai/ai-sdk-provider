@@ -1,0 +1,67 @@
+{
+  "name": "@quiverai/vercel-ai-provider",
+  "version": "0.1.0",
+  "license": "MIT",
+  "sideEffects": false,
+  "packageManager": "pnpm@10.23.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/__snapshots__",
+    "!src/**/__fixtures__",
+    "README.md"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm clean && tsup --tsconfig tsconfig.build.json",
+    "build:watch": "pnpm clean && tsup --watch",
+    "clean": "del-cli dist coverage test-results *.tsbuildinfo",
+    "fmt": "prettier --write \"./**/*.{ts,tsx,js,json,md}\"",
+    "lint": "eslint \"./**/*.ts\" \"./**/*.js\"",
+    "typecheck": "tsc --build",
+    "type-check": "pnpm typecheck",
+    "test": "pnpm test:node && pnpm test:edge && pnpm test:e2e",
+    "test:node": "vitest --config vitest.node.config.js --run",
+    "test:edge": "vitest --config vitest.edge.config.js --run",
+    "test:e2e": "vitest --config vitest.node.config.js --run test/e2e",
+    "test:update": "vitest --config vitest.node.config.js --run -u",
+    "test:watch": "vitest --config vitest.node.config.js"
+  },
+  "dependencies": {
+    "@ai-sdk/provider": "3.0.8",
+    "@ai-sdk/provider-utils": "4.0.19"
+  },
+  "devDependencies": {
+    "@ai-sdk/test-server": "1.0.3",
+    "@eslint/js": "9.39.1",
+    "@types/node": "25.0.0",
+    "ai": "6.0.116",
+    "del-cli": "7.0.0",
+    "edge-runtime": "4.0.1",
+    "eslint": "9.39.1",
+    "globals": "16.5.0",
+    "prettier": "3.8.1",
+    "tsup": "8.5.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.1",
+    "vitest": "4.0.18",
+    "zod": "4.1.8"
+  }
+}

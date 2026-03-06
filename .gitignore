@@ -1,0 +1,17 @@
+.DS_Store
+node_modules
+.pnpm-store
+dist
+coverage
+.cache
+.turbo
+test-results
+.vite
+.eslintcache
+*.log
+*.local
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+*.tgz

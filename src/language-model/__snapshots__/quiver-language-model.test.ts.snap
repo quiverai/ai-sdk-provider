@@ -1,0 +1,212 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`QuiverLanguageModel > maps streaming draft/content snapshots into reasoning and text parts 1`] = `
+[
+  {
+    "type": "stream-start",
+    "warnings": [],
+  },
+  {
+    "rawValue": {
+      "id": "svg-stream-1",
+      "svg": "<ignored/>",
+      "type": "reasoning",
+    },
+    "type": "raw",
+  },
+  {
+    "id": "svg-stream-1",
+    "modelId": "quiver-svg",
+    "type": "response-metadata",
+  },
+  {
+    "rawValue": {
+      "id": "svg-stream-1",
+      "svg": "<svg",
+      "type": "draft",
+    },
+    "type": "raw",
+  },
+  {
+    "id": "reasoning-0",
+    "type": "reasoning-start",
+  },
+  {
+    "delta": "<svg",
+    "id": "reasoning-0",
+    "type": "reasoning-delta",
+  },
+  {
+    "rawValue": {
+      "id": "svg-stream-1",
+      "svg": "<svg><path d="M0 0",
+      "type": "draft",
+    },
+    "type": "raw",
+  },
+  {
+    "delta": "><path d="M0 0",
+    "id": "reasoning-0",
+    "type": "reasoning-delta",
+  },
+  {
+    "rawValue": {
+      "id": "svg-stream-1",
+      "svg": "<svg>",
+      "type": "content",
+    },
+    "type": "raw",
+  },
+  {
+    "id": "reasoning-0",
+    "type": "reasoning-end",
+  },
+  {
+    "id": "0",
+    "type": "text-start",
+  },
+  {
+    "delta": "<svg>",
+    "id": "0",
+    "type": "text-delta",
+  },
+  {
+    "rawValue": {
+      "id": "svg-stream-1",
+      "svg": "<svg><path d="M0 0L10 10"/></svg>",
+      "type": "content",
+      "usage": {
+        "input_tokens": 9,
+        "output_tokens": 15,
+        "total_tokens": 24,
+      },
+    },
+    "type": "raw",
+  },
+  {
+    "delta": "<path d="M0 0L10 10"/></svg>",
+    "id": "0",
+    "type": "text-delta",
+  },
+  {
+    "id": "0",
+    "type": "text-end",
+  },
+  {
+    "finishReason": {
+      "raw": "stop",
+      "unified": "stop",
+    },
+    "type": "finish",
+    "usage": {
+      "inputTokens": {
+        "cacheRead": undefined,
+        "cacheWrite": undefined,
+        "noCache": 9,
+        "total": 9,
+      },
+      "outputTokens": {
+        "reasoning": undefined,
+        "text": 15,
+        "total": 15,
+      },
+      "raw": {
+        "input_tokens": 9,
+        "output_tokens": 15,
+        "total_tokens": 24,
+      },
+    },
+  },
+]
+`;
+
+exports[`QuiverLanguageModel > restarts the active reasoning or text block when snapshots reset 1`] = `
+[
+  {
+    "type": "stream-start",
+    "warnings": [],
+  },
+  {
+    "id": "svg-stream-reset",
+    "modelId": "quiver-svg",
+    "type": "response-metadata",
+  },
+  {
+    "id": "reasoning-1",
+    "type": "reasoning-start",
+  },
+  {
+    "delta": "<svg><circle",
+    "id": "reasoning-1",
+    "type": "reasoning-delta",
+  },
+  {
+    "id": "reasoning-1",
+    "type": "reasoning-end",
+  },
+  {
+    "id": "reasoning-2",
+    "type": "reasoning-start",
+  },
+  {
+    "delta": "<svg><rect width="10"/></svg>",
+    "id": "reasoning-2",
+    "type": "reasoning-delta",
+  },
+  {
+    "id": "reasoning-2",
+    "type": "reasoning-end",
+  },
+  {
+    "id": "0",
+    "type": "text-start",
+  },
+  {
+    "delta": "<svg><path d="M0 0"/></svg>",
+    "id": "0",
+    "type": "text-delta",
+  },
+  {
+    "id": "0",
+    "type": "text-end",
+  },
+  {
+    "id": "0",
+    "type": "text-start",
+  },
+  {
+    "delta": "<svg><path d="M0 0"/><path d="M1 1"/></svg>",
+    "id": "0",
+    "type": "text-delta",
+  },
+  {
+    "id": "0",
+    "type": "text-end",
+  },
+  {
+    "finishReason": {
+      "raw": "stop",
+      "unified": "stop",
+    },
+    "type": "finish",
+    "usage": {
+      "inputTokens": {
+        "cacheRead": undefined,
+        "cacheWrite": undefined,
+        "noCache": 6,
+        "total": 6,
+      },
+      "outputTokens": {
+        "reasoning": undefined,
+        "text": 8,
+        "total": 8,
+      },
+      "raw": {
+        "input_tokens": 6,
+        "output_tokens": 8,
+        "total_tokens": 14,
+      },
+    },
+  },
+]
+`;

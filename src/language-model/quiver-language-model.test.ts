@@ -1,4 +1,8 @@
-import { APICallError, LanguageModelV3CallOptions } from "@ai-sdk/provider";
+import {
+  APICallError,
+  LanguageModelV3CallOptions,
+  UnsupportedFunctionalityError,
+} from "@ai-sdk/provider";
 import {
   convertReadableStreamToArray,
   mockId,
@@ -10,6 +14,7 @@ import {
   generateStreamChunksFixture,
   generateSvgResponseFixture,
   malformedSvgResponseFixture,
+  multiOutputSvgResponseFixture,
   resetStreamChunksFixture,
   vectorizeSvgResponseFixture,
 } from "./__fixtures__/quiver-fixtures";
@@ -84,6 +89,7 @@ describe("QuiverLanguageModel", () => {
     expect(result.request).toEqual({
       body: {
         model: "quiver-svg",
+        n: 1,
         stream: false,
         temperature: undefined,
         top_p: undefined,
@@ -100,6 +106,18 @@ describe("QuiverLanguageModel", () => {
       headers: {
         "content-type": "application/json",
         "x-request-id": "req-gen",
+      },
+    });
+    expect(result.providerMetadata).toEqual({
+      quiver: {
+        outputCount: 1,
+        outputs: [
+          {
+            index: 0,
+            svg: generateSvgResponseFixture.data[0].svg,
+            mimeType: "image/svg+xml",
+          },
+        ],
       },
     });
     expect(server.calls[0].requestHeaders).toMatchObject({
@@ -136,6 +154,7 @@ describe("QuiverLanguageModel", () => {
     ]);
     expect(await server.calls[0].requestBodyJson).toEqual({
       model: "quiver-svg",
+      n: 1,
       stream: false,
       temperature: undefined,
       top_p: undefined,
@@ -162,6 +181,61 @@ describe("QuiverLanguageModel", () => {
       { type: "unsupported", feature: "seed" },
       { type: "unsupported", feature: "stopSequences" },
     ]);
+  });
+
+  it("supports QuiverAI n for non-streaming calls and exposes all outputs", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "json-value",
+      body: multiOutputSvgResponseFixture,
+    };
+
+    const result = await model.doGenerate({
+      ...generateOptions,
+      providerOptions: {
+        quiver: {
+          operation: "generate",
+          n: 2,
+        },
+      },
+    });
+
+    expect(result.content).toEqual([
+      { type: "text", text: multiOutputSvgResponseFixture.data[0].svg },
+    ]);
+    expect(result.providerMetadata).toEqual({
+      quiver: {
+        outputCount: 2,
+        outputs: [
+          {
+            index: 0,
+            svg: multiOutputSvgResponseFixture.data[0].svg,
+            mimeType: "image/svg+xml",
+          },
+          {
+            index: 1,
+            svg: multiOutputSvgResponseFixture.data[1].svg,
+            mimeType: "image/svg+xml",
+          },
+        ],
+      },
+    });
+    expect(await server.calls[0].requestBodyJson).toMatchObject({
+      n: 2,
+    });
+  });
+
+  it("rejects streaming with QuiverAI n > 1", async () => {
+    await expect(
+      model.doStream({
+        ...generateOptions,
+        providerOptions: {
+          quiver: {
+            operation: "generate",
+            n: 2,
+          },
+        },
+      }),
+    ).rejects.toBeInstanceOf(UnsupportedFunctionalityError);
   });
 
   it("throws on malformed successful responses", async () => {
@@ -197,6 +271,7 @@ describe("QuiverLanguageModel", () => {
     expect(result.request).toEqual({
       body: {
         model: "quiver-svg",
+        n: 1,
         stream: true,
         temperature: undefined,
         top_p: undefined,

@@ -9,6 +9,7 @@ import {
   createV2StreamTransformer,
   extractSvgText,
   getArgsV2,
+  getQuiverProviderMetadata,
   getResponseMetadataFromJson,
   postGenerateRequest,
   postStreamRequest,
@@ -71,6 +72,7 @@ export class QuiverV2LanguageModel implements LanguageModelV2 {
         headers: responseHeaders,
         body: rawValue,
       },
+      providerMetadata: getQuiverProviderMetadata(response),
       warnings,
     };
   }
@@ -79,6 +81,7 @@ export class QuiverV2LanguageModel implements LanguageModelV2 {
     const { body, warnings, operation } = await getArgsV2({
       modelId: this.modelId,
       options,
+      stream: true,
     });
 
     const { responseHeaders, value: response } = await postStreamRequest({

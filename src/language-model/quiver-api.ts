@@ -44,6 +44,7 @@ import { QuiverLanguageModelConfig } from "../quiver-config";
 type QuiverRequestBody =
   | {
       model: string;
+      n: number;
       stream: boolean;
       temperature: number | undefined;
       top_p: number | undefined;
@@ -55,6 +56,7 @@ type QuiverRequestBody =
     }
   | {
       model: string;
+      n: number;
       stream: boolean;
       temperature: number | undefined;
       top_p: number | undefined;
@@ -68,9 +70,11 @@ type QuiverRequestBody =
 export async function getArgsV3({
   modelId,
   options,
+  stream = false,
 }: {
   modelId: string;
   options: LanguageModelV3CallOptions;
+  stream?: boolean;
 }): Promise<{
   body: QuiverRequestBody;
   warnings: SharedV3Warning[];
@@ -87,7 +91,7 @@ export async function getArgsV3({
       modelId,
       operationOptions: providerOptions,
       prompt: options.prompt,
-      stream: false,
+      stream,
       maxOutputTokens: options.maxOutputTokens,
       temperature: options.temperature,
       topP: options.topP,
@@ -101,9 +105,11 @@ export async function getArgsV3({
 export async function getArgsV2({
   modelId,
   options,
+  stream = false,
 }: {
   modelId: string;
   options: LanguageModelV2CallOptions;
+  stream?: boolean;
 }): Promise<{
   body: QuiverRequestBody;
   warnings: LanguageModelV2CallWarning[];
@@ -120,7 +126,7 @@ export async function getArgsV2({
       modelId,
       operationOptions: providerOptions,
       prompt: options.prompt,
-      stream: false,
+      stream,
       maxOutputTokens: options.maxOutputTokens,
       temperature: options.temperature,
       topP: options.topP,
@@ -195,15 +201,27 @@ export function getResponseMetadataFromJson({
 }
 
 export function extractSvgText(response: SvgResponse): string {
-  if (response.data.length !== 1) {
+  if (response.data.length < 1) {
     throw new InvalidArgumentError({
       argument: "response.data",
-      message:
-        "Quiver provider expects exactly one SVG document in the response.",
+      message: "Quiver provider received a response without any SVG outputs.",
     });
   }
 
   return response.data[0].svg;
+}
+
+export function getQuiverProviderMetadata(response: SvgResponse) {
+  return {
+    quiver: {
+      outputCount: response.data.length,
+      outputs: response.data.map((item, index) => ({
+        index,
+        svg: item.svg,
+        mimeType: item.mime_type,
+      })),
+    },
+  };
 }
 
 export function createV3StreamTransformer({
@@ -253,6 +271,9 @@ export function createV3StreamTransformer({
         });
       }
 
+      // QuiverAI is deprecating dedicated reasoning events. We intentionally map
+      // `draft` snapshots to AI SDK reasoning and `content` snapshots to text,
+      // per provider guidance, and ignore legacy `reasoning` events.
       if (value.type === "reasoning") {
         return;
       }
@@ -384,6 +405,9 @@ export function createV2StreamTransformer({
         });
       }
 
+      // QuiverAI is deprecating dedicated reasoning events. We intentionally map
+      // `draft` snapshots to AI SDK reasoning and `content` snapshots to text,
+      // per provider guidance, and ignore legacy `reasoning` events.
       if (value.type === "reasoning") {
         return;
       }
@@ -489,6 +513,14 @@ function buildRequestBody({
   topP: number | undefined;
   presencePenalty: number | undefined;
 }): QuiverRequestBody {
+  if (stream && operationOptions.n != null && operationOptions.n > 1) {
+    throw new UnsupportedFunctionalityError({
+      functionality: "providerOptions.quiver.n>1 for streaming",
+      message:
+        "Quiver streaming currently supports only a single output. Use generateText with providerOptions.quiver.n for multiple outputs.",
+    });
+  }
+
   const convertedPrompt = convertToQuiverPrompt({
     prompt,
     operation: operationOptions.operation,
@@ -508,6 +540,7 @@ function buildRequestBody({
 
     return {
       model: modelId,
+      n: operationOptions.n ?? 1,
       stream,
       temperature,
       top_p: topP,
@@ -521,6 +554,7 @@ function buildRequestBody({
 
   return {
     model: modelId,
+    n: operationOptions.n ?? 1,
     stream,
     temperature,
     top_p: topP,

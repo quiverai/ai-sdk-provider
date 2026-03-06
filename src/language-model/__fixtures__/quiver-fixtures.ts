@@ -30,6 +30,26 @@ export const vectorizeSvgResponseFixture = {
   },
 };
 
+export const multiOutputSvgResponseFixture = {
+  id: "svg-gen-many",
+  created: 1_741_215_280,
+  data: [
+    {
+      svg: '<svg viewBox="0 0 10 10"><rect width="10" height="10"/></svg>',
+      mime_type: "image/svg+xml" as const,
+    },
+    {
+      svg: '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"/></svg>',
+      mime_type: "image/svg+xml" as const,
+    },
+  ],
+  usage: {
+    total_tokens: 42,
+    input_tokens: 12,
+    output_tokens: 30,
+  },
+};
+
 export const generateStreamChunksFixture = [
   toSseChunk({
     type: "reasoning",

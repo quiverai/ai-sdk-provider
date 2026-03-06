@@ -1,4 +1,8 @@
-import { APICallError, LanguageModelV2CallOptions } from "@ai-sdk/provider";
+import {
+  APICallError,
+  LanguageModelV2CallOptions,
+  UnsupportedFunctionalityError,
+} from "@ai-sdk/provider";
 import {
   convertReadableStreamToArray,
   mockId,
@@ -10,6 +14,7 @@ import {
   generateStreamChunksFixture,
   generateSvgResponseFixture,
   malformedSvgResponseFixture,
+  multiOutputSvgResponseFixture,
 } from "./__fixtures__/quiver-fixtures";
 import { QuiverV2LanguageModel } from "./quiver-v2-language-model";
 
@@ -60,6 +65,7 @@ describe("QuiverV2LanguageModel", () => {
     });
     expect(result.request?.body).toEqual({
       model: "quiver-svg",
+      n: 1,
       stream: false,
       temperature: undefined,
       top_p: undefined,
@@ -68,6 +74,54 @@ describe("QuiverV2LanguageModel", () => {
       instructions: undefined,
       prompt: "Draw a square icon.",
       references: undefined,
+    });
+    expect(result.providerMetadata).toEqual({
+      quiver: {
+        outputCount: 1,
+        outputs: [
+          {
+            index: 0,
+            svg: generateSvgResponseFixture.data[0].svg,
+            mimeType: "image/svg+xml",
+          },
+        ],
+      },
+    });
+  });
+
+  it("supports QuiverAI n for non-streaming V2 calls", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "json-value",
+      body: multiOutputSvgResponseFixture,
+    };
+
+    const result = await model.doGenerate({
+      ...generateOptions,
+      providerOptions: {
+        quiver: {
+          operation: "generate",
+          n: 2,
+        },
+      },
+    });
+
+    expect(result.content).toEqual([
+      { type: "text", text: multiOutputSvgResponseFixture.data[0].svg },
+    ]);
+    expect(result.providerMetadata?.quiver).toEqual({
+      outputCount: 2,
+      outputs: [
+        {
+          index: 0,
+          svg: multiOutputSvgResponseFixture.data[0].svg,
+          mimeType: "image/svg+xml",
+        },
+        {
+          index: 1,
+          svg: multiOutputSvgResponseFixture.data[1].svg,
+          mimeType: "image/svg+xml",
+        },
+      ],
     });
   });
 
@@ -84,6 +138,20 @@ describe("QuiverV2LanguageModel", () => {
     const parts = await convertReadableStreamToArray(result.stream);
 
     expect(parts).toMatchSnapshot();
+  });
+
+  it("rejects streaming with QuiverAI n > 1", async () => {
+    await expect(
+      model.doStream({
+        ...generateOptions,
+        providerOptions: {
+          quiver: {
+            operation: "generate",
+            n: 2,
+          },
+        },
+      }),
+    ).rejects.toBeInstanceOf(UnsupportedFunctionalityError);
   });
 
   it("throws on malformed successful responses", async () => {

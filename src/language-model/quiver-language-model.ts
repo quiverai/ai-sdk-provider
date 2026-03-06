@@ -10,6 +10,7 @@ import {
   createV3StreamTransformer,
   extractSvgText,
   getArgsV3,
+  getQuiverProviderMetadata,
   getResponseMetadataFromJson,
   postGenerateRequest,
   postStreamRequest,
@@ -70,6 +71,7 @@ export class QuiverLanguageModel implements LanguageModelV3 {
         headers: responseHeaders,
         body: rawValue,
       },
+      providerMetadata: getQuiverProviderMetadata(response),
       warnings,
     };
   }
@@ -80,6 +82,7 @@ export class QuiverLanguageModel implements LanguageModelV3 {
     const { body, warnings, operation } = await getArgsV3({
       modelId: this.modelId,
       options,
+      stream: true,
     });
 
     const { responseHeaders, value: response } = await postStreamRequest({

@@ -50,8 +50,10 @@ Use QuiverAI-specific options through `providerOptions.quiver`:
 
 Streaming behavior is intentionally mapped as:
 
-- QuiverAI `draft` snapshots -> AI SDK reasoning
+- QuiverAI `draft` token deltas -> AI SDK reasoning
 - QuiverAI `content` snapshots -> AI SDK text
+
+QuiverAI `draft` is currently streamed token-by-token without higher-level chunking, so the provider forwards those deltas directly as AI SDK reasoning updates.
 
 Streaming currently supports only a single output. Use `generateText` with `providerOptions.quiver.n` for multi-output generation.
 

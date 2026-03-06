@@ -270,9 +270,10 @@ export function createV3StreamTransformer({
         });
       }
 
-      // QuiverAI guidance is to map `draft` SVG deltas to AI SDK reasoning and
-      // `content` SVG snapshots to AI SDK text. Dedicated reasoning/generating
-      // events are transitional and intentionally ignored here.
+      // QuiverAI guidance is to map `draft` SVG token deltas directly to AI SDK
+      // reasoning and `content` SVG snapshots to AI SDK text. Dedicated
+      // reasoning/generating events are transitional and intentionally ignored
+      // here.
       if (value.type === "reasoning" || value.type === "generating") {
         return;
       }
@@ -395,9 +396,10 @@ export function createV2StreamTransformer({
         });
       }
 
-      // QuiverAI guidance is to map `draft` SVG deltas to AI SDK reasoning and
-      // `content` SVG snapshots to AI SDK text. Dedicated reasoning/generating
-      // events are transitional and intentionally ignored here.
+      // QuiverAI guidance is to map `draft` SVG token deltas directly to AI SDK
+      // reasoning and `content` SVG snapshots to AI SDK text. Dedicated
+      // reasoning/generating events are transitional and intentionally ignored
+      // here.
       if (value.type === "reasoning" || value.type === "generating") {
         return;
       }

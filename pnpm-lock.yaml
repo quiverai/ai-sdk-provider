@@ -14,6 +14,9 @@ importers:
       '@ai-sdk/provider-utils':
         specifier: 4.0.19
         version: 4.0.19(zod@4.1.8)
+      zod:
+        specifier: 4.1.8
+        version: 4.1.8
     devDependencies:
       '@ai-sdk/test-server':
         specifier: 1.0.3
@@ -57,9 +60,6 @@ importers:
       vitest:
         specifier: 4.0.18
         version: 4.0.18(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@25.0.0)(msw@2.12.10(@types/node@25.0.0)(typescript@5.9.3))(tsx@4.20.6)
-      zod:
-        specifier: 4.1.8
-        version: 4.1.8
 
 packages:
 

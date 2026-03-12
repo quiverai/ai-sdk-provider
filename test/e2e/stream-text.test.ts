@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createQuiver } from "../../src";
 import {
   generateStreamChunksFixture,
+  multiOutputGenerateStreamChunksFixture,
   vectorizeStreamChunksFixture,
 } from "../../src/language-model/__fixtures__/quiverai-fixtures";
 
@@ -72,5 +73,29 @@ describe("streamText e2e", () => {
     const files = await result.files;
     expect(files).toHaveLength(1);
     expect(files[0].mediaType).toBe("image/svg+xml");
+  });
+
+  it("streams multi-output SVGs with n=2", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "stream-chunks",
+      chunks: multiOutputGenerateStreamChunksFixture,
+    };
+
+    const provider = createQuiver({ apiKey: "test-api-key", fetch });
+    const result = streamText({
+      model: provider("quiver-svg"),
+      prompt: "Draw two icon variants.",
+      providerOptions: {
+        quiver: {
+          operation: "generate",
+          n: 2,
+        },
+      },
+    });
+
+    const files = await result.files;
+    expect(files).toHaveLength(2);
+    expect(files[0].mediaType).toBe("image/svg+xml");
+    expect(files[1].mediaType).toBe("image/svg+xml");
   });
 });

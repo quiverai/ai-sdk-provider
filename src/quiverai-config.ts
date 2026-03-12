@@ -26,7 +26,9 @@ export type QuiverLanguageModelConfig = {
 
 function normalizeBaseURL(baseURL: string | undefined): string | undefined {
   const trimmedBaseURL = baseURL?.trim();
-  return trimmedBaseURL && trimmedBaseURL.length > 0 ? trimmedBaseURL : undefined;
+  return trimmedBaseURL && trimmedBaseURL.length > 0
+    ? trimmedBaseURL
+    : undefined;
 }
 
 export function createQuiverConfig(

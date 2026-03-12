@@ -226,6 +226,59 @@ export function getQuiverProviderMetadata(response: SvgResponse) {
   };
 }
 
+type StreamOutputState = {
+  outputIndex: number | undefined;
+  activeReasoningId: string | null;
+  activeTextId: string | null;
+  textSnapshot: string;
+};
+
+function getOrCreateOutputState({
+  value,
+  outputStates,
+}: {
+  value: SvgStreamChunk;
+  outputStates: Map<string, StreamOutputState>;
+}): StreamOutputState {
+  const key =
+    value.index != null
+      ? `index:${value.index}`
+      : value.id != null
+        ? `id:${value.id}`
+        : "default";
+
+  const existing = outputStates.get(key);
+  if (existing != null) {
+    return existing;
+  }
+
+  const created: StreamOutputState = {
+    outputIndex: value.index,
+    activeReasoningId: null,
+    activeTextId: null,
+    textSnapshot: "",
+  };
+  outputStates.set(key, created);
+  return created;
+}
+
+function getOrderedOutputStates(
+  outputStates: Map<string, StreamOutputState>,
+): StreamOutputState[] {
+  return [...outputStates.values()].sort((a, b) => {
+    if (a.outputIndex == null && b.outputIndex == null) {
+      return 0;
+    }
+    if (a.outputIndex == null) {
+      return 1;
+    }
+    if (b.outputIndex == null) {
+      return -1;
+    }
+    return a.outputIndex - b.outputIndex;
+  });
+}
+
 export function createV3StreamTransformer({
   warnings,
   modelId,
@@ -239,9 +292,7 @@ export function createV3StreamTransformer({
 }) {
   let usage: SvgUsage | undefined;
   let sentResponseMetadata = false;
-  let activeReasoningId: string | null = null;
-  let activeTextId: string | null = null;
-  let textSnapshot = "";
+  const outputStates = new Map<string, StreamOutputState>();
   let sawError = false;
 
   return new TransformStream<
@@ -283,24 +334,32 @@ export function createV3StreamTransformer({
         return;
       }
 
+      const outputState = getOrCreateOutputState({
+        value,
+        outputStates,
+      });
+
       if (value.type === "draft") {
-        if (activeTextId != null) {
-          controller.enqueue({ type: "text-end", id: activeTextId });
-          activeTextId = null;
+        if (outputState.activeTextId != null) {
+          controller.enqueue({
+            type: "text-end",
+            id: outputState.activeTextId,
+          });
+          outputState.activeTextId = null;
         }
 
-        if (activeReasoningId == null) {
-          activeReasoningId = generateId();
+        if (outputState.activeReasoningId == null) {
+          outputState.activeReasoningId = generateId();
           controller.enqueue({
             type: "reasoning-start",
-            id: activeReasoningId,
+            id: outputState.activeReasoningId,
           });
         }
 
         if (value.svg.length > 0) {
           controller.enqueue({
             type: "reasoning-delta",
-            id: activeReasoningId,
+            id: outputState.activeReasoningId,
             delta: value.svg,
           });
         }
@@ -308,49 +367,71 @@ export function createV3StreamTransformer({
         return;
       }
 
-      const diff = getSnapshotDelta(textSnapshot, value.svg);
+      const diff = getSnapshotDelta(outputState.textSnapshot, value.svg);
 
-      if (activeReasoningId != null) {
-        controller.enqueue({ type: "reasoning-end", id: activeReasoningId });
-        activeReasoningId = null;
+      if (outputState.activeReasoningId != null) {
+        controller.enqueue({
+          type: "reasoning-end",
+          id: outputState.activeReasoningId,
+        });
+        outputState.activeReasoningId = null;
       }
 
-      if (diff.reset && activeTextId != null) {
-        controller.enqueue({ type: "text-end", id: activeTextId });
-        activeTextId = null;
+      if (diff.reset && outputState.activeTextId != null) {
+        controller.enqueue({ type: "text-end", id: outputState.activeTextId });
+        outputState.activeTextId = null;
       }
 
-      if (activeTextId == null) {
-        activeTextId = generateId();
-        controller.enqueue({ type: "text-start", id: activeTextId });
+      if (outputState.activeTextId == null) {
+        outputState.activeTextId = generateId();
+        controller.enqueue({
+          type: "text-start",
+          id: outputState.activeTextId,
+        });
       }
 
       if (diff.delta.length > 0) {
         controller.enqueue({
           type: "text-delta",
-          id: activeTextId,
+          id: outputState.activeTextId,
           delta: diff.delta,
         });
       }
 
-      textSnapshot = value.svg;
+      outputState.textSnapshot = value.svg;
     },
 
     flush(controller) {
-      if (activeReasoningId != null) {
-        controller.enqueue({ type: "reasoning-end", id: activeReasoningId });
+      const orderedOutputStates = getOrderedOutputStates(outputStates);
+
+      for (const outputState of orderedOutputStates) {
+        if (outputState.activeReasoningId != null) {
+          controller.enqueue({
+            type: "reasoning-end",
+            id: outputState.activeReasoningId,
+          });
+        }
+
+        if (outputState.activeTextId != null) {
+          controller.enqueue({
+            type: "text-end",
+            id: outputState.activeTextId,
+          });
+        }
       }
 
-      if (activeTextId != null) {
-        controller.enqueue({ type: "text-end", id: activeTextId });
-      }
+      if (!sawError) {
+        for (const outputState of orderedOutputStates) {
+          if (outputState.textSnapshot.length < 1) {
+            continue;
+          }
 
-      if (!sawError && textSnapshot.length > 0) {
-        controller.enqueue({
-          type: "file",
-          mediaType: "image/svg+xml",
-          data: new TextEncoder().encode(textSnapshot),
-        });
+          controller.enqueue({
+            type: "file",
+            mediaType: "image/svg+xml",
+            data: new TextEncoder().encode(outputState.textSnapshot),
+          });
+        }
       }
 
       controller.enqueue({
@@ -375,9 +456,7 @@ export function createV2StreamTransformer({
 }) {
   let usage: SvgUsage | undefined;
   let sentResponseMetadata = false;
-  let activeReasoningId: string | null = null;
-  let activeTextId: string | null = null;
-  let textSnapshot = "";
+  const outputStates = new Map<string, StreamOutputState>();
   let sawError = false;
 
   return new TransformStream<
@@ -419,24 +498,32 @@ export function createV2StreamTransformer({
         return;
       }
 
+      const outputState = getOrCreateOutputState({
+        value,
+        outputStates,
+      });
+
       if (value.type === "draft") {
-        if (activeTextId != null) {
-          controller.enqueue({ type: "text-end", id: activeTextId });
-          activeTextId = null;
+        if (outputState.activeTextId != null) {
+          controller.enqueue({
+            type: "text-end",
+            id: outputState.activeTextId,
+          });
+          outputState.activeTextId = null;
         }
 
-        if (activeReasoningId == null) {
-          activeReasoningId = generateId();
+        if (outputState.activeReasoningId == null) {
+          outputState.activeReasoningId = generateId();
           controller.enqueue({
             type: "reasoning-start",
-            id: activeReasoningId,
+            id: outputState.activeReasoningId,
           });
         }
 
         if (value.svg.length > 0) {
           controller.enqueue({
             type: "reasoning-delta",
-            id: activeReasoningId,
+            id: outputState.activeReasoningId,
             delta: value.svg,
           });
         }
@@ -444,41 +531,55 @@ export function createV2StreamTransformer({
         return;
       }
 
-      const diff = getSnapshotDelta(textSnapshot, value.svg);
+      const diff = getSnapshotDelta(outputState.textSnapshot, value.svg);
 
-      if (activeReasoningId != null) {
-        controller.enqueue({ type: "reasoning-end", id: activeReasoningId });
-        activeReasoningId = null;
+      if (outputState.activeReasoningId != null) {
+        controller.enqueue({
+          type: "reasoning-end",
+          id: outputState.activeReasoningId,
+        });
+        outputState.activeReasoningId = null;
       }
 
-      if (diff.reset && activeTextId != null) {
-        controller.enqueue({ type: "text-end", id: activeTextId });
-        activeTextId = null;
+      if (diff.reset && outputState.activeTextId != null) {
+        controller.enqueue({ type: "text-end", id: outputState.activeTextId });
+        outputState.activeTextId = null;
       }
 
-      if (activeTextId == null) {
-        activeTextId = generateId();
-        controller.enqueue({ type: "text-start", id: activeTextId });
+      if (outputState.activeTextId == null) {
+        outputState.activeTextId = generateId();
+        controller.enqueue({
+          type: "text-start",
+          id: outputState.activeTextId,
+        });
       }
 
       if (diff.delta.length > 0) {
         controller.enqueue({
           type: "text-delta",
-          id: activeTextId,
+          id: outputState.activeTextId,
           delta: diff.delta,
         });
       }
 
-      textSnapshot = value.svg;
+      outputState.textSnapshot = value.svg;
     },
 
     flush(controller) {
-      if (activeReasoningId != null) {
-        controller.enqueue({ type: "reasoning-end", id: activeReasoningId });
-      }
+      for (const outputState of getOrderedOutputStates(outputStates)) {
+        if (outputState.activeReasoningId != null) {
+          controller.enqueue({
+            type: "reasoning-end",
+            id: outputState.activeReasoningId,
+          });
+        }
 
-      if (activeTextId != null) {
-        controller.enqueue({ type: "text-end", id: activeTextId });
+        if (outputState.activeTextId != null) {
+          controller.enqueue({
+            type: "text-end",
+            id: outputState.activeTextId,
+          });
+        }
       }
 
       controller.enqueue({
@@ -511,14 +612,6 @@ function buildRequestBody({
   topP: number | undefined;
   presencePenalty: number | undefined;
 }): QuiverRequestBody {
-  if (stream && operationOptions.n != null && operationOptions.n > 1) {
-    throw new UnsupportedFunctionalityError({
-      functionality: "providerOptions.quiverai.n>1 for streaming",
-      message:
-        "QuiverAI streaming currently supports only a single output. Use generateText with providerOptions.quiverai.n for multiple outputs.",
-    });
-  }
-
   const convertedPrompt = convertToQuiverPrompt({
     prompt,
     operation: operationOptions.operation,

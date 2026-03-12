@@ -45,7 +45,7 @@ console.log(result.text);
 Use QuiverAI-specific options through `providerOptions.quiverai`:
 
 - `operation: "generate" | "vectorize"` is required
-- `n` controls non-streaming multi-output requests
+- `n` controls multi-output requests (up to 16)
 - `autoCrop` and `targetSize` are available for `vectorize`
 
 Streaming behavior is intentionally mapped as:
@@ -55,7 +55,7 @@ Streaming behavior is intentionally mapped as:
 
 QuiverAI `draft` is currently streamed token-by-token without higher-level chunking, so the provider forwards those deltas directly as AI SDK reasoning updates.
 
-Streaming currently supports only a single output. Use `generateText` with `providerOptions.quiverai.n` for multi-output generation.
+For `n > 1` streaming calls, QuiverAI events may be interleaved across outputs. Use the stable output identifiers (`index` and `id`) in stream events to route chunks per output.
 
 ## Examples
 

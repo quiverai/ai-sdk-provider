@@ -1,8 +1,4 @@
-import {
-  APICallError,
-  LanguageModelV3CallOptions,
-  UnsupportedFunctionalityError,
-} from "@ai-sdk/provider";
+import { APICallError, LanguageModelV3CallOptions } from "@ai-sdk/provider";
 import {
   convertReadableStreamToArray,
   mockId,
@@ -15,6 +11,7 @@ import {
   generateSvgResponseFixture,
   malformedSvgResponseFixture,
   malformedStreamChunksFixture,
+  multiOutputGenerateStreamChunksFixture,
   multiOutputSvgResponseFixture,
   nonContentUsageStreamChunksFixture,
   resetStreamChunksFixture,
@@ -45,6 +42,7 @@ const config = createQuiverConfig({
 
 const model = new QuiverLanguageModel("arrow-preview", config);
 const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 const generateOptions = {
   prompt: [
@@ -242,18 +240,88 @@ describe("QuiverLanguageModel", () => {
     });
   });
 
-  it("rejects streaming with QuiverAI n > 1", async () => {
-    await expect(
-      model.doStream({
-        ...generateOptions,
-        providerOptions: {
-          quiverai: {
-            operation: "generate",
-            n: 2,
-          },
-        },
+  it("supports streaming with QuiverAI n > 1 and maps interleaved outputs", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "stream-chunks",
+      chunks: multiOutputGenerateStreamChunksFixture,
+    };
+
+    const multiOutputModel = new QuiverLanguageModel(
+      "arrow-preview",
+      createQuiverConfig({
+        apiKey: "test-api-key",
+        generateId: mockId({ prefix: "multi-output" }),
       }),
-    ).rejects.toBeInstanceOf(UnsupportedFunctionalityError);
+    );
+
+    const result = await multiOutputModel.doStream({
+      ...generateOptions,
+      providerOptions: {
+        quiverai: {
+          operation: "generate",
+          n: 2,
+        },
+      },
+    });
+    const parts = await convertReadableStreamToArray(result.stream);
+
+    expect(result.request).toEqual({
+      body: {
+        model: "arrow-preview",
+        n: 2,
+        stream: true,
+        temperature: undefined,
+        top_p: undefined,
+        max_output_tokens: undefined,
+        presence_penalty: undefined,
+        instructions: "Keep the SVG compact.",
+        prompt: "Draw a square icon.",
+        references: undefined,
+      },
+    });
+    expect(
+      parts.filter((part) => part.type === "reasoning-start"),
+    ).toHaveLength(2);
+    expect(parts.filter((part) => part.type === "text-start")).toHaveLength(2);
+
+    const fileParts = parts.filter((part) => part.type === "file");
+    expect(fileParts).toHaveLength(2);
+    const firstFile =
+      typeof fileParts[0].data === "string"
+        ? fileParts[0].data
+        : decoder.decode(fileParts[0].data);
+    const secondFile =
+      typeof fileParts[1].data === "string"
+        ? fileParts[1].data
+        : decoder.decode(fileParts[1].data);
+    expect(firstFile).toBe('<svg><rect width="10" height="10"/></svg>');
+    expect(secondFile).toBe('<svg><circle cx="5" cy="5" r="4"/></svg>');
+
+    expect(parts[parts.length - 1]).toEqual({
+      type: "finish",
+      finishReason: {
+        raw: "stop",
+        unified: "stop",
+      },
+      usage: {
+        inputTokens: {
+          total: 12,
+          noCache: 12,
+          cacheRead: undefined,
+          cacheWrite: undefined,
+        },
+        outputTokens: {
+          total: 24,
+          text: 24,
+          reasoning: undefined,
+        },
+        raw: {
+          total_tokens: 36,
+          input_tokens: 12,
+          output_tokens: 24,
+        },
+      },
+    });
   });
 
   it("throws on malformed successful responses", async () => {

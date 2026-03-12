@@ -1,8 +1,4 @@
-import {
-  APICallError,
-  LanguageModelV2CallOptions,
-  UnsupportedFunctionalityError,
-} from "@ai-sdk/provider";
+import { APICallError, LanguageModelV2CallOptions } from "@ai-sdk/provider";
 import {
   convertReadableStreamToArray,
   mockId,
@@ -15,6 +11,7 @@ import {
   generateSvgResponseFixture,
   malformedSvgResponseFixture,
   malformedStreamChunksFixture,
+  multiOutputGenerateStreamChunksFixture,
   multiOutputSvgResponseFixture,
   nonContentUsageStreamChunksFixture,
 } from "./__fixtures__/quiverai-fixtures";
@@ -142,18 +139,50 @@ describe("QuiverV2LanguageModel", () => {
     expect(parts).toMatchSnapshot();
   });
 
-  it("rejects streaming with QuiverAI n > 1", async () => {
-    await expect(
-      model.doStream({
-        ...generateOptions,
-        providerOptions: {
-          quiverai: {
-            operation: "generate",
-            n: 2,
-          },
-        },
+  it("supports streaming with QuiverAI n > 1 and maps interleaved outputs", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "stream-chunks",
+      chunks: multiOutputGenerateStreamChunksFixture,
+    };
+
+    const multiOutputModel = new QuiverV2LanguageModel(
+      "arrow-preview",
+      createQuiverConfig({
+        apiKey: "test-api-key",
+        generateId: mockId({ prefix: "multi-output-v2" }),
       }),
-    ).rejects.toBeInstanceOf(UnsupportedFunctionalityError);
+    );
+
+    const result = await multiOutputModel.doStream({
+      ...generateOptions,
+      providerOptions: {
+        quiverai: {
+          operation: "generate",
+          n: 2,
+        },
+      },
+    });
+    const parts = await convertReadableStreamToArray(result.stream);
+
+    expect(result.request?.body).toMatchObject({
+      n: 2,
+      stream: true,
+    });
+    expect(
+      parts.filter((part) => part.type === "reasoning-start"),
+    ).toHaveLength(2);
+    expect(parts.filter((part) => part.type === "text-start")).toHaveLength(2);
+    expect(parts[parts.length - 1]).toEqual({
+      type: "finish",
+      finishReason: "stop",
+      usage: {
+        cachedInputTokens: undefined,
+        inputTokens: 12,
+        outputTokens: 24,
+        reasoningTokens: undefined,
+        totalTokens: 36,
+      },
+    });
   });
 
   it("throws on malformed successful responses", async () => {

@@ -164,6 +164,38 @@ export const vectorizeStreamChunksFixture = [
   }),
 ];
 
+export const multiOutputGenerateStreamChunksFixture = [
+  toSseChunk({
+    type: "draft",
+    index: 0,
+    id: "svg-stream-0",
+    svg: "<svg>",
+  }),
+  toSseChunk({
+    type: "draft",
+    index: 1,
+    id: "svg-stream-1",
+    svg: "<svg>",
+  }),
+  toSseChunk({
+    type: "content",
+    index: 0,
+    id: "svg-stream-0",
+    svg: '<svg><rect width="10" height="10"/></svg>',
+  }),
+  toSseChunk({
+    type: "content",
+    index: 1,
+    id: "svg-stream-1",
+    svg: '<svg><circle cx="5" cy="5" r="4"/></svg>',
+    usage: {
+      total_tokens: 36,
+      input_tokens: 12,
+      output_tokens: 24,
+    },
+  }),
+];
+
 export const malformedSvgResponseFixture = {
   id: "bad-svg-1",
   created: 1_741_215_320,

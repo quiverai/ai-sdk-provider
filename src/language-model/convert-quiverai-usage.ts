@@ -1,5 +1,5 @@
 import { LanguageModelV2Usage, LanguageModelV3Usage } from "@ai-sdk/provider";
-import { SvgUsage } from "./quiver-api-types";
+import { SvgUsage } from "./quiverai-api-types";
 
 export function convertQuiverUsageV3(
   usage: SvgUsage | undefined,

@@ -1,8 +1,8 @@
 import { LanguageModelV3CallOptions, NoSuchModelError } from "@ai-sdk/provider";
 import { createTestServer } from "@ai-sdk/test-server/with-vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { generateSvgResponseFixture } from "./language-model/__fixtures__/quiver-fixtures";
-import { createQuiver } from "./quiver-provider";
+import { generateSvgResponseFixture } from "./language-model/__fixtures__/quiverai-fixtures";
+import { createQuiver } from "./quiverai-provider";
 
 const encoder = new TextEncoder();
 
@@ -35,7 +35,7 @@ const generateOptions = {
     },
   ],
   providerOptions: {
-    quiver: {
+    quiverai: {
       operation: "generate",
     },
   },
@@ -48,7 +48,7 @@ describe("createQuiver", () => {
 
   it("uses the default base URL and auth headers", async () => {
     const provider = createQuiver({ apiKey: "test-api-key" });
-    const result = await provider("quiver-svg").doGenerate(generateOptions);
+    const result = await provider("arrow-preview").doGenerate(generateOptions);
 
     expect(result.content).toEqual([
       { type: "text", text: generateSvgResponseFixture.data[0].svg },
@@ -66,15 +66,15 @@ describe("createQuiver", () => {
       authorization: "Bearer test-api-key",
       "content-type": "application/json",
     });
-    expect(server.calls[0].requestUserAgent).toContain("ai-sdk/quiver/");
+    expect(server.calls[0].requestUserAgent).toContain("ai-sdk/quiverai/");
   });
 
   it("reads the base URL and API key from the environment", async () => {
-    vi.stubEnv("QUIVER_API_KEY", "env-api-key");
-    vi.stubEnv("QUIVER_BASE_URL", "https://env.quiver.ai/v1");
+    vi.stubEnv("QUIVERAI_API_KEY", "env-api-key");
+    vi.stubEnv("QUIVERAI_BASE_URL", "https://env.quiver.ai/v1");
 
     const provider = createQuiver();
-    await provider.chat("quiver-svg").doGenerate(generateOptions);
+    await provider.chat("arrow-preview").doGenerate(generateOptions);
 
     expect(server.calls).toHaveLength(1);
     expect(server.calls[0].requestUrl).toBe(
@@ -86,27 +86,29 @@ describe("createQuiver", () => {
   });
 
   it("prefers explicit options and exposes the standard factory methods", async () => {
-    vi.stubEnv("QUIVER_API_KEY", "env-api-key");
-    vi.stubEnv("QUIVER_BASE_URL", "https://env.quiver.ai/v1");
+    vi.stubEnv("QUIVERAI_API_KEY", "env-api-key");
+    vi.stubEnv("QUIVERAI_BASE_URL", "https://env.quiver.ai/v1");
 
     const provider = createQuiver({
       apiKey: "override-api-key",
       baseURL: "https://override.quiver.ai/v1",
-      headers: { "X-Quiver-Test": "1" },
+      headers: { "X-QuiverAI-Test": "1" },
     });
 
-    expect(provider("quiver-svg").modelId).toBe("quiver-svg");
-    expect(provider.languageModel("quiver-svg").modelId).toBe("quiver-svg");
-    expect(provider.chat("quiver-svg").provider).toBe("quiver");
+    expect(provider("arrow-preview").modelId).toBe("arrow-preview");
+    expect(provider.languageModel("arrow-preview").modelId).toBe(
+      "arrow-preview",
+    );
+    expect(provider.chat("arrow-preview").provider).toBe("quiverai");
 
-    await provider("quiver-svg").doGenerate(generateOptions);
+    await provider("arrow-preview").doGenerate(generateOptions);
 
     expect(server.calls[0].requestUrl).toBe(
       "https://override.quiver.ai/v1/svgs/generations",
     );
     expect(server.calls[0].requestHeaders).toMatchObject({
       authorization: "Bearer override-api-key",
-      "x-quiver-test": "1",
+      "x-quiverai-test": "1",
     });
   });
 

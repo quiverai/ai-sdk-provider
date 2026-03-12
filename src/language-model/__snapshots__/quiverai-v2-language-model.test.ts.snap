@@ -28,7 +28,7 @@ exports[`QuiverV2LanguageModel > maps QuiverAI stream parts into V2 reasoning/te
   },
   {
     "id": "svg-stream-1",
-    "modelId": "quiver-svg",
+    "modelId": "arrow-preview",
     "type": "response-metadata",
   },
   {

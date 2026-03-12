@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import { generateText } from "ai";
-import { quiver } from "@quiverai/vercel-ai-provider";
+import { quiverai } from "@quiverai/vercel-ai-provider";
 
-const modelId = process.env.QUIVER_MODEL_ID ?? "arrow-preview";
+const modelId = process.env.QUIVERAI_MODEL_ID ?? "arrow-preview";
 
 const mediaTypeByExtension: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -32,7 +32,7 @@ async function main() {
 
   const input = await readFile(inputPath);
   const result = await generateText({
-    model: quiver(modelId),
+    model: quiverai(modelId),
     messages: [
       {
         role: "user",
@@ -47,7 +47,7 @@ async function main() {
     ],
     maxOutputTokens: 2048,
     providerOptions: {
-      quiver: {
+      quiverai: {
         operation: "vectorize",
       },
     },

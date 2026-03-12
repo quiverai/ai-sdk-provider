@@ -1,9 +1,9 @@
 import { APICallError } from "@ai-sdk/provider";
 import { describe, expect, it } from "vitest";
-import { quiverFailedResponseHandler } from "./quiver-error";
+import { quiveraiFailedResponseHandler } from "./quiverai-error";
 
-describe("quiverFailedResponseHandler", () => {
-  it("maps Quiver error envelopes into API call errors", async () => {
+describe("quiveraiFailedResponseHandler", () => {
+  it("maps QuiverAI error envelopes into API call errors", async () => {
     const response = new Response(
       JSON.stringify({
         status: 429,
@@ -17,9 +17,9 @@ describe("quiverFailedResponseHandler", () => {
       },
     );
 
-    const { value } = await quiverFailedResponseHandler({
+    const { value } = await quiveraiFailedResponseHandler({
       url: "https://api.quiver.ai/v1/svgs/generations",
-      requestBodyValues: { model: "quiver-svg" },
+      requestBodyValues: { model: "arrow-preview" },
       response,
     });
 
@@ -47,9 +47,9 @@ describe("quiverFailedResponseHandler", () => {
       },
     );
 
-    const { value } = await quiverFailedResponseHandler({
+    const { value } = await quiveraiFailedResponseHandler({
       url: "https://api.quiver.ai/v1/svgs/generations",
-      requestBodyValues: { model: "quiver-svg" },
+      requestBodyValues: { model: "arrow-preview" },
       response,
     });
 

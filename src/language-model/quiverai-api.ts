@@ -19,12 +19,12 @@ import {
 import {
   convertQuiverUsageV2,
   convertQuiverUsageV3,
-} from "./convert-quiver-usage";
-import { convertToQuiverPrompt } from "./convert-to-quiver-prompt";
+} from "./convert-quiverai-usage";
+import { convertToQuiverPrompt } from "./convert-to-quiverai-prompt";
 import {
   mapQuiverFinishReasonV2,
   mapQuiverFinishReasonV3,
-} from "./map-quiver-finish-reason";
+} from "./map-quiverai-finish-reason";
 import {
   PublicErrorEnvelope,
   SvgResponse,
@@ -33,13 +33,13 @@ import {
   publicErrorEnvelopeSchema,
   svgResponseSchema,
   svgStreamChunkSchema,
-} from "./quiver-api-types";
+} from "./quiverai-api-types";
 import {
   QuiverLanguageModelOptions,
   quiverLanguageModelOptionsSchema,
-} from "./quiver-language-model-options";
-import { quiverFailedResponseHandler } from "../quiver-error";
-import { QuiverLanguageModelConfig } from "../quiver-config";
+} from "./quiverai-language-model-options";
+import { quiveraiFailedResponseHandler } from "../quiverai-error";
+import { QuiverLanguageModelConfig } from "../quiverai-config";
 
 type QuiverRequestBody =
   | {
@@ -154,7 +154,7 @@ export async function postGenerateRequest({
     url: config.url(getOperationPath(operation)),
     headers: combineHeaders(config.headers(), headers),
     body,
-    failedResponseHandler: quiverFailedResponseHandler,
+    failedResponseHandler: quiveraiFailedResponseHandler,
     successfulResponseHandler: createJsonResponseHandler(svgResponseSchema),
     abortSignal,
     fetch: config.fetch,
@@ -178,7 +178,7 @@ export async function postStreamRequest({
     url: config.url(getOperationPath(operation)),
     headers: combineHeaders(config.headers(), headers),
     body: { ...body, stream: true },
-    failedResponseHandler: quiverFailedResponseHandler,
+    failedResponseHandler: quiveraiFailedResponseHandler,
     successfulResponseHandler:
       createEventSourceResponseHandler(svgStreamChunkSchema),
     abortSignal,
@@ -212,15 +212,17 @@ export function extractSvgText(response: SvgResponse): string {
 }
 
 export function getQuiverProviderMetadata(response: SvgResponse) {
+  const metadata = {
+    outputCount: response.data.length,
+    outputs: response.data.map((item, index) => ({
+      index,
+      svg: item.svg,
+      mimeType: item.mime_type,
+    })),
+  };
+
   return {
-    quiver: {
-      outputCount: response.data.length,
-      outputs: response.data.map((item, index) => ({
-        index,
-        svg: item.svg,
-        mimeType: item.mime_type,
-      })),
-    },
+    quiverai: metadata,
   };
 }
 
@@ -511,9 +513,9 @@ function buildRequestBody({
 }): QuiverRequestBody {
   if (stream && operationOptions.n != null && operationOptions.n > 1) {
     throw new UnsupportedFunctionalityError({
-      functionality: "providerOptions.quiver.n>1 for streaming",
+      functionality: "providerOptions.quiverai.n>1 for streaming",
       message:
-        "QuiverAI streaming currently supports only a single output. Use generateText with providerOptions.quiver.n for multiple outputs.",
+        "QuiverAI streaming currently supports only a single output. Use generateText with providerOptions.quiverai.n for multiple outputs.",
     });
   }
 
@@ -528,7 +530,7 @@ function buildRequestBody({
       operationOptions.targetSize !== undefined
     ) {
       throw new InvalidArgumentError({
-        argument: "providerOptions.quiver",
+        argument: "providerOptions.quiverai",
         message:
           "QuiverAI generate mode does not accept autoCrop or targetSize options.",
       });
@@ -569,17 +571,19 @@ async function parseQuiverOptions({
     | LanguageModelV2CallOptions["providerOptions"]
     | LanguageModelV3CallOptions["providerOptions"];
 }): Promise<QuiverLanguageModelOptions> {
-  const options = await parseProviderOptions({
-    provider: "quiver",
+  const quiveraiOptions = await parseProviderOptions({
+    provider: "quiverai",
     providerOptions,
     schema: quiverLanguageModelOptionsSchema,
   });
 
+  const options = quiveraiOptions;
+
   if (options == null) {
     throw new InvalidArgumentError({
-      argument: "providerOptions.quiver.operation",
+      argument: "providerOptions.quiverai.operation",
       message:
-        'QuiverAI requires providerOptions.quiver.operation to be set to "generate" or "vectorize".',
+        'QuiverAI requires providerOptions.quiverai.operation to be set to "generate" or "vectorize".',
     });
   }
 

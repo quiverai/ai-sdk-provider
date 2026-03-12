@@ -4,7 +4,7 @@ import {
   LanguageModelV2Content,
 } from "@ai-sdk/provider";
 import { generateId } from "@ai-sdk/provider-utils";
-import { QuiverLanguageModelConfig } from "../quiver-config";
+import { QuiverLanguageModelConfig } from "../quiverai-config";
 import {
   createV2StreamTransformer,
   extractSvgText,
@@ -13,9 +13,9 @@ import {
   getResponseMetadataFromJson,
   postGenerateRequest,
   postStreamRequest,
-} from "./quiver-api";
-import { convertQuiverUsageV2 } from "./convert-quiver-usage";
-import { mapQuiverFinishReasonV2 } from "./map-quiver-finish-reason";
+} from "./quiverai-api";
+import { convertQuiverUsageV2 } from "./convert-quiverai-usage";
+import { mapQuiverFinishReasonV2 } from "./map-quiverai-finish-reason";
 
 export class QuiverV2LanguageModel implements LanguageModelV2 {
   readonly specificationVersion = "v2";

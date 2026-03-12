@@ -1,17 +1,17 @@
 import { generateText } from "ai";
-import { quiver } from "@quiverai/vercel-ai-provider";
+import { quiverai } from "@quiverai/vercel-ai-provider";
 
-const modelId = process.env.QUIVER_MODEL_ID ?? "arrow-preview";
+const modelId = process.env.QUIVERAI_MODEL_ID ?? "arrow-preview";
 
 async function main() {
   const result = await generateText({
-    model: quiver(modelId),
+    model: quiverai(modelId),
     prompt:
       process.argv.slice(2).join(" ").trim() ||
       "Generate two simple SVG icon variations for the same concept.",
     maxOutputTokens: 1024,
     providerOptions: {
-      quiver: {
+      quiverai: {
         operation: "generate",
         n: 2,
       },
@@ -23,7 +23,7 @@ async function main() {
   console.log("");
   console.log("QuiverAI all outputs:");
   console.log(
-    JSON.stringify(result.providerMetadata?.quiver?.outputs ?? [], null, 2),
+    JSON.stringify(result.providerMetadata?.quiverai?.outputs ?? [], null, 2),
   );
 }
 

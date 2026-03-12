@@ -1,17 +1,17 @@
 import { generateText } from "ai";
-import { quiver } from "@quiverai/vercel-ai-provider";
+import { quiverai } from "@quiverai/vercel-ai-provider";
 
-const modelId = process.env.QUIVER_MODEL_ID ?? "arrow-preview";
+const modelId = process.env.QUIVERAI_MODEL_ID ?? "arrow-preview";
 
 async function main() {
   const result = await generateText({
-    model: quiver(modelId),
+    model: quiverai(modelId),
     prompt:
       process.argv.slice(2).join(" ").trim() ||
       "Generate a simple geometric SVG icon.",
     maxOutputTokens: 512,
     providerOptions: {
-      quiver: {
+      quiverai: {
         operation: "generate",
       },
     },

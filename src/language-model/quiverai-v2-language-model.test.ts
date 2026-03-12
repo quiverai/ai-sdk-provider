@@ -9,7 +9,7 @@ import {
 } from "@ai-sdk/provider-utils/test";
 import { createTestServer } from "@ai-sdk/test-server/with-vitest";
 import { describe, expect, it } from "vitest";
-import { createQuiverConfig } from "../quiver-config";
+import { createQuiverConfig } from "../quiverai-config";
 import {
   generateStreamChunksFixture,
   generateSvgResponseFixture,
@@ -17,8 +17,8 @@ import {
   malformedStreamChunksFixture,
   multiOutputSvgResponseFixture,
   nonContentUsageStreamChunksFixture,
-} from "./__fixtures__/quiver-fixtures";
-import { QuiverV2LanguageModel } from "./quiver-v2-language-model";
+} from "./__fixtures__/quiverai-fixtures";
+import { QuiverV2LanguageModel } from "./quiverai-v2-language-model";
 
 const server = createTestServer({
   "https://api.quiver.ai/v1/svgs/generations": {
@@ -34,7 +34,7 @@ const config = createQuiverConfig({
   generateId: mockId({ prefix: "reasoning-v2" }),
 });
 
-const model = new QuiverV2LanguageModel("quiver-svg", config);
+const model = new QuiverV2LanguageModel("arrow-preview", config);
 
 const generateOptions = {
   prompt: [
@@ -44,7 +44,7 @@ const generateOptions = {
     },
   ],
   providerOptions: {
-    quiver: {
+    quiverai: {
       operation: "generate",
     },
   },
@@ -66,7 +66,7 @@ describe("QuiverV2LanguageModel", () => {
       cachedInputTokens: undefined,
     });
     expect(result.request?.body).toEqual({
-      model: "quiver-svg",
+      model: "arrow-preview",
       n: 1,
       stream: false,
       temperature: undefined,
@@ -78,7 +78,7 @@ describe("QuiverV2LanguageModel", () => {
       references: undefined,
     });
     expect(result.providerMetadata).toEqual({
-      quiver: {
+      quiverai: {
         outputCount: 1,
         outputs: [
           {
@@ -100,7 +100,7 @@ describe("QuiverV2LanguageModel", () => {
     const result = await model.doGenerate({
       ...generateOptions,
       providerOptions: {
-        quiver: {
+        quiverai: {
           operation: "generate",
           n: 2,
         },
@@ -110,7 +110,7 @@ describe("QuiverV2LanguageModel", () => {
     expect(result.content).toEqual([
       { type: "text", text: multiOutputSvgResponseFixture.data[0].svg },
     ]);
-    expect(result.providerMetadata?.quiver).toEqual({
+    expect(result.providerMetadata?.quiverai).toEqual({
       outputCount: 2,
       outputs: [
         {
@@ -147,7 +147,7 @@ describe("QuiverV2LanguageModel", () => {
       model.doStream({
         ...generateOptions,
         providerOptions: {
-          quiver: {
+          quiverai: {
             operation: "generate",
             n: 2,
           },

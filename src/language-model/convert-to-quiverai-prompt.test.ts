@@ -1,6 +1,6 @@
 import { InvalidPromptError } from "@ai-sdk/provider";
 import { describe, expect, it } from "vitest";
-import { convertToQuiverPrompt } from "./convert-to-quiver-prompt";
+import { convertToQuiverPrompt } from "./convert-to-quiverai-prompt";
 
 describe("convertToQuiverPrompt", () => {
   it("maps generate prompts with text, system instructions, and references", () => {

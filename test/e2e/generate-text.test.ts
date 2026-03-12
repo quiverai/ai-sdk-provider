@@ -5,7 +5,7 @@ import { createQuiver, createQuiverV2 } from "../../src";
 import {
   generateSvgResponseFixture,
   vectorizeSvgResponseFixture,
-} from "../../src/language-model/__fixtures__/quiver-fixtures";
+} from "../../src/language-model/__fixtures__/quiverai-fixtures";
 
 const server = createTestServer({
   "https://api.quiver.ai/v1/svgs/generations": {
@@ -33,11 +33,11 @@ describe("generateText e2e", () => {
   it("generates SVG text through the V3 provider export", async () => {
     const provider = createQuiver({ apiKey: "test-api-key", fetch });
     const result = await generateText({
-      model: provider("quiver-svg"),
+      model: provider("arrow-preview"),
       system: "Keep the output compact.",
       prompt: "Draw a square icon.",
       providerOptions: {
-        quiver: {
+        quiverai: {
           operation: "generate",
         },
       },
@@ -55,7 +55,7 @@ describe("generateText e2e", () => {
   it("vectorizes an image through the V3 provider export", async () => {
     const provider = createQuiver({ apiKey: "test-api-key", fetch });
     const result = await generateText({
-      model: provider("quiver-svg"),
+      model: provider("arrow-preview"),
       messages: [
         {
           role: "user",
@@ -69,7 +69,7 @@ describe("generateText e2e", () => {
         },
       ],
       providerOptions: {
-        quiver: {
+        quiverai: {
           operation: "vectorize",
         },
       },
@@ -83,10 +83,10 @@ describe("generateText e2e", () => {
   it("supports the V2 provider export in generateText", async () => {
     const provider = createQuiverV2({ apiKey: "test-api-key", fetch });
     const result = await generateText({
-      model: provider("quiver-svg"),
+      model: provider("arrow-preview"),
       prompt: "Draw a square icon.",
       providerOptions: {
-        quiver: {
+        quiverai: {
           operation: "generate",
         },
       },

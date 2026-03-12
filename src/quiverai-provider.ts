@@ -3,8 +3,8 @@ import {
   NoSuchModelError,
   ProviderV3,
 } from "@ai-sdk/provider";
-import { createQuiverConfig, QuiverProviderSettings } from "./quiver-config";
-import { QuiverLanguageModel } from "./language-model/quiver-language-model";
+import { createQuiverConfig, QuiverProviderSettings } from "./quiverai-config";
+import { QuiverLanguageModel } from "./language-model/quiverai-language-model";
 
 export interface QuiverProvider extends ProviderV3 {
   (modelId: string): LanguageModelV3;
@@ -43,4 +43,4 @@ export function createQuiver(
   return provider as QuiverProvider;
 }
 
-export const quiver = createQuiver();
+export const quiverai = createQuiver();

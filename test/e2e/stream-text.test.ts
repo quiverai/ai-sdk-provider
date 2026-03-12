@@ -5,7 +5,7 @@ import { createQuiver } from "../../src";
 import {
   generateStreamChunksFixture,
   vectorizeStreamChunksFixture,
-} from "../../src/language-model/__fixtures__/quiver-fixtures";
+} from "../../src/language-model/__fixtures__/quiverai-fixtures";
 
 const server = createTestServer({
   "https://api.quiver.ai/v1/svgs/generations": {
@@ -27,10 +27,10 @@ describe("streamText e2e", () => {
   it("maps draft deltas to reasoning and content snapshots to text", async () => {
     const provider = createQuiver({ apiKey: "test-api-key", fetch });
     const result = streamText({
-      model: provider("quiver-svg"),
+      model: provider("arrow-preview"),
       prompt: "Draw a square icon.",
       providerOptions: {
-        quiver: {
+        quiverai: {
           operation: "generate",
         },
       },
@@ -46,7 +46,7 @@ describe("streamText e2e", () => {
   it("streams vectorized SVG text", async () => {
     const provider = createQuiver({ apiKey: "test-api-key", fetch });
     const result = streamText({
-      model: provider("quiver-svg"),
+      model: provider("arrow-preview"),
       messages: [
         {
           role: "user",
@@ -60,7 +60,7 @@ describe("streamText e2e", () => {
         },
       ],
       providerOptions: {
-        quiver: {
+        quiverai: {
           operation: "vectorize",
         },
       },

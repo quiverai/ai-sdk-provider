@@ -6,7 +6,7 @@ import {
   LanguageModelV3StreamResult,
 } from "@ai-sdk/provider";
 import { generateId } from "@ai-sdk/provider-utils";
-import { QuiverLanguageModelConfig } from "../quiver-config";
+import { QuiverLanguageModelConfig } from "../quiverai-config";
 import {
   createV3StreamTransformer,
   extractSvgText,
@@ -15,9 +15,9 @@ import {
   getResponseMetadataFromJson,
   postGenerateRequest,
   postStreamRequest,
-} from "./quiver-api";
-import { convertQuiverUsageV3 } from "./convert-quiver-usage";
-import { mapQuiverFinishReasonV3 } from "./map-quiver-finish-reason";
+} from "./quiverai-api";
+import { convertQuiverUsageV3 } from "./convert-quiverai-usage";
+import { mapQuiverFinishReasonV3 } from "./map-quiverai-finish-reason";
 
 export class QuiverLanguageModel implements LanguageModelV3 {
   readonly specificationVersion = "v3";

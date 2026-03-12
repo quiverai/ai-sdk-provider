@@ -31,23 +31,23 @@ export function createQuiverConfig(
     withoutTrailingSlash(
       loadOptionalSetting({
         settingValue: options.baseURL,
-        environmentVariableName: "QUIVER_BASE_URL",
+        environmentVariableName: "QUIVERAI_BASE_URL",
       }),
     ) ?? "https://api.quiver.ai/v1";
 
-  const providerName = options.name ?? "quiver";
+  const providerName = options.name ?? "quiverai";
 
   const headers = () =>
     withUserAgentSuffix(
       {
         Authorization: `Bearer ${loadApiKey({
           apiKey: options.apiKey,
-          environmentVariableName: "QUIVER_API_KEY",
+          environmentVariableName: "QUIVERAI_API_KEY",
           description: "QuiverAI",
         })}`,
         ...options.headers,
       },
-      `ai-sdk/quiver/${VERSION}`,
+      `ai-sdk/quiverai/${VERSION}`,
     );
 
   return {

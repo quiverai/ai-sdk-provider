@@ -66,16 +66,16 @@ jobs:
       - name: Run real QuiverAI smoke tests
         shell: bash
         run: |
-          if [ -z "$QUIVER_API_KEY" ]; then
-            echo "QUIVER_API_KEY is not configured; skipping real QuiverAI smoke tests."
+          if [ -z "$QUIVERAI_API_KEY" ]; then
+            echo "QUIVERAI_API_KEY is not configured; skipping real QuiverAI smoke tests."
             exit 0
           fi
 
           pnpm test:e2e
         env:
           RUN_REAL_API_SMOKE_TEST: "true"
-          QUIVER_API_KEY: ${{ secrets.QUIVER_API_KEY }}
-          QUIVER_MODEL_ID: arrow-preview
+          QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
+          QUIVERAI_MODEL_ID: arrow-preview
 
   examples:
     name: Examples
@@ -115,8 +115,8 @@ jobs:
       - name: Run QuiverAI examples
         shell: bash
         run: |
-          if [ -z "$QUIVER_API_KEY" ]; then
-            echo "QUIVER_API_KEY is not configured; skipping QuiverAI examples."
+          if [ -z "$QUIVERAI_API_KEY" ]; then
+            echo "QUIVERAI_API_KEY is not configured; skipping QuiverAI examples."
             exit 0
           fi
 
@@ -125,5 +125,5 @@ jobs:
           pnpm exec tsx examples/multi-output.ts "Generate two simple SVG icon variations."
           pnpm exec tsx examples/vectorize-file.ts /tmp/quiverai-example.png
         env:
-          QUIVER_API_KEY: ${{ secrets.QUIVER_API_KEY }}
-          QUIVER_MODEL_ID: arrow-preview
+          QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
+          QUIVERAI_MODEL_ID: arrow-preview

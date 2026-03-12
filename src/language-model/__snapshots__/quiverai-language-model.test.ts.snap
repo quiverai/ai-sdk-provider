@@ -28,7 +28,7 @@ exports[`QuiverLanguageModel > maps QuiverAI draft deltas and content snapshots 
   },
   {
     "id": "svg-stream-1",
-    "modelId": "quiver-svg",
+    "modelId": "arrow-preview",
     "type": "response-metadata",
   },
   {
@@ -171,7 +171,7 @@ exports[`QuiverLanguageModel > restarts the active text block when content snaps
   },
   {
     "id": "svg-stream-reset",
-    "modelId": "quiver-svg",
+    "modelId": "arrow-preview",
     "type": "response-metadata",
   },
   {

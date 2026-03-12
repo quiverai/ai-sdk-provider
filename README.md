@@ -13,25 +13,25 @@ pnpm add ai @quiverai/vercel-ai-provider
 Set your QuiverAI API key:
 
 ```bash
-export QUIVER_API_KEY=your_api_key
+export QUIVERAI_API_KEY=your_api_key
 ```
 
 Optional environment variables:
 
-- `QUIVER_BASE_URL` to override the default `https://api.quiver.ai/v1`
-- `QUIVER_MODEL_ID` to override the default example model `arrow-preview`
+- `QUIVERAI_BASE_URL` to override the default `https://api.quiver.ai/v1`
+- `QUIVERAI_MODEL_ID` to override the default example model `arrow-preview`
 
 ## Usage
 
 ```ts
 import { generateText } from "ai";
-import { quiver } from "@quiverai/vercel-ai-provider";
+import { quiverai } from "@quiverai/vercel-ai-provider";
 
 const result = await generateText({
-  model: quiver("arrow-preview"),
+  model: quiverai("arrow-preview"),
   prompt: "Generate a simple geometric SVG icon.",
   providerOptions: {
-    quiver: {
+    quiverai: {
       operation: "generate",
     },
   },
@@ -42,7 +42,7 @@ console.log(result.text);
 
 ## QuiverAI Options
 
-Use QuiverAI-specific options through `providerOptions.quiver`:
+Use QuiverAI-specific options through `providerOptions.quiverai`:
 
 - `operation: "generate" | "vectorize"` is required
 - `n` controls non-streaming multi-output requests
@@ -55,7 +55,7 @@ Streaming behavior is intentionally mapped as:
 
 QuiverAI `draft` is currently streamed token-by-token without higher-level chunking, so the provider forwards those deltas directly as AI SDK reasoning updates.
 
-Streaming currently supports only a single output. Use `generateText` with `providerOptions.quiver.n` for multi-output generation.
+Streaming currently supports only a single output. Use `generateText` with `providerOptions.quiverai.n` for multi-output generation.
 
 ## Examples
 

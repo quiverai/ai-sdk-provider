@@ -11,7 +11,7 @@ import {
   LanguageModelV3TextPart,
 } from "@ai-sdk/provider";
 import { convertToBase64 } from "@ai-sdk/provider-utils";
-import { QuiverOperation } from "./quiver-language-model-options";
+import { QuiverOperation } from "./quiverai-language-model-options";
 
 const RASTER_MEDIA_TYPES = new Set([
   "image/png",

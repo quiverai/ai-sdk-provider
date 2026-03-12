@@ -23,6 +23,7 @@ const server = createTestServer({
   },
 });
 void server;
+const decoder = new TextDecoder();
 
 describe("streamText e2e", () => {
   it("maps draft deltas to reasoning and content snapshots to text", async () => {
@@ -93,9 +94,33 @@ describe("streamText e2e", () => {
       },
     });
 
-    const files = await result.files;
-    expect(files).toHaveLength(2);
-    expect(files[0].mediaType).toBe("image/svg+xml");
-    expect(files[1].mediaType).toBe("image/svg+xml");
+    const parts = [];
+    for await (const part of result.fullStream) {
+      parts.push(part);
+    }
+
+    const finishIndex = parts.findIndex((part) => part.type === "finish");
+    expect(finishIndex).toBeGreaterThan(0);
+    expect(
+      parts
+        .slice(0, finishIndex)
+        .some((part) => part.type === "text-delta" || part.type === "file"),
+    ).toBe(true);
+
+    const textStarts = parts.filter((part) => part.type === "text-start");
+    const textDeltas = parts.filter((part) => part.type === "text-delta");
+    expect(textStarts).toHaveLength(2);
+    expect(new Set(textDeltas.map((part) => part.id)).size).toBe(2);
+
+    const fileParts = parts.filter((part) => part.type === "file");
+    expect(fileParts).toHaveLength(2);
+    expect(fileParts[0].file.mediaType).toBe("image/svg+xml");
+    expect(fileParts[1].file.mediaType).toBe("image/svg+xml");
+    expect(decoder.decode(fileParts[0].file.uint8Array)).toBe(
+      '<svg><rect width="10" height="10"/></svg>',
+    );
+    expect(decoder.decode(fileParts[1].file.uint8Array)).toBe(
+      '<svg><circle cx="5" cy="5" r="4"/></svg>',
+    );
   });
 });

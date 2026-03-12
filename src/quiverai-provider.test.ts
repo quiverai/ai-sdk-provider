@@ -85,12 +85,12 @@ describe("createQuiver", () => {
     );
   });
 
-  it("falls back to the default base URL when QUIVER_BASE_URL is empty", async () => {
-    vi.stubEnv("QUIVER_API_KEY", "env-api-key");
-    vi.stubEnv("QUIVER_BASE_URL", "");
+  it("falls back to the default base URL when QUIVERAI_BASE_URL is empty", async () => {
+    vi.stubEnv("QUIVERAI_API_KEY", "env-api-key");
+    vi.stubEnv("QUIVERAI_BASE_URL", "");
 
     const provider = createQuiver();
-    await provider.chat("quiver-svg").doGenerate(generateOptions);
+    await provider.chat("arrow-preview").doGenerate(generateOptions);
 
     expect(server.calls[0].requestUrl).toBe(
       "https://api.quiver.ai/v1/svgs/generations",

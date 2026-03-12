@@ -84,10 +84,10 @@ describe("streamText e2e", () => {
 
     const provider = createQuiver({ apiKey: "test-api-key", fetch });
     const result = streamText({
-      model: provider("quiver-svg"),
+      model: provider("arrow-preview"),
       prompt: "Draw two icon variants.",
       providerOptions: {
-        quiver: {
+        quiverai: {
           operation: "generate",
           n: 2,
         },

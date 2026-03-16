@@ -23,8 +23,6 @@ const server = createTestServer({
   },
 });
 void server;
-const decoder = new TextDecoder();
-
 describe("streamText e2e", () => {
   it("maps draft deltas to reasoning and content snapshots to text", async () => {
     const provider = createQuiver({ apiKey: "test-api-key", fetch });
@@ -76,7 +74,7 @@ describe("streamText e2e", () => {
     expect(files[0].mediaType).toBe("image/svg+xml");
   });
 
-  it("streams multi-output SVGs with n=2", async () => {
+  it("streams multi-output SVGs as JSON lines on a single text stream", async () => {
     server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
       type: "stream-chunks",
       chunks: multiOutputGenerateStreamChunksFixture,
@@ -94,33 +92,50 @@ describe("streamText e2e", () => {
       },
     });
 
-    const parts = [];
-    for await (const part of result.fullStream) {
-      parts.push(part);
+    const text = await result.text;
+    const events = text
+      .trim()
+      .split("\n")
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line));
+
+    expect(events).toEqual([
+      {
+        index: 0,
+        id: "svg-stream-0",
+        type: "draft",
+        svg: "<svg>",
+      },
+      {
+        index: 1,
+        id: "svg-stream-1",
+        type: "draft",
+        svg: "<svg>",
+      },
+      {
+        index: 0,
+        id: "svg-stream-0",
+        type: "content",
+        svg: '<svg><rect width="10" height="10"/></svg>',
+      },
+      {
+        index: 1,
+        id: "svg-stream-1",
+        type: "content",
+        svg: '<svg><circle cx="5" cy="5" r="4"/></svg>',
+        usage: {
+          total_tokens: 36,
+          input_tokens: 12,
+          output_tokens: 24,
+        },
+      },
+    ]);
+
+    const byIndex = new Map<number, string>();
+    for (const event of events) {
+      byIndex.set(event.index, event.svg);
     }
-
-    const finishIndex = parts.findIndex((part) => part.type === "finish");
-    expect(finishIndex).toBeGreaterThan(0);
-    expect(
-      parts
-        .slice(0, finishIndex)
-        .some((part) => part.type === "text-delta" || part.type === "file"),
-    ).toBe(true);
-
-    const textStarts = parts.filter((part) => part.type === "text-start");
-    const textDeltas = parts.filter((part) => part.type === "text-delta");
-    expect(textStarts).toHaveLength(2);
-    expect(new Set(textDeltas.map((part) => part.id)).size).toBe(2);
-
-    const fileParts = parts.filter((part) => part.type === "file");
-    expect(fileParts).toHaveLength(2);
-    expect(fileParts[0].file.mediaType).toBe("image/svg+xml");
-    expect(fileParts[1].file.mediaType).toBe("image/svg+xml");
-    expect(decoder.decode(fileParts[0].file.uint8Array)).toBe(
-      '<svg><rect width="10" height="10"/></svg>',
-    );
-    expect(decoder.decode(fileParts[1].file.uint8Array)).toBe(
-      '<svg><circle cx="5" cy="5" r="4"/></svg>',
-    );
+    expect(byIndex.get(0)).toBe('<svg><rect width="10" height="10"/></svg>');
+    expect(byIndex.get(1)).toBe('<svg><circle cx="5" cy="5" r="4"/></svg>');
   });
 });

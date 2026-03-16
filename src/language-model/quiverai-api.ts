@@ -279,20 +279,33 @@ function getOrderedOutputStates(
   });
 }
 
+function toStreamJsonEvent(value: SvgStreamChunk): string {
+  return JSON.stringify({
+    index: value.index ?? 0,
+    id: value.id,
+    type: value.type,
+    svg: value.svg,
+    usage: value.usage,
+  });
+}
+
 export function createV3StreamTransformer({
   warnings,
   modelId,
   generateId,
   includeRawChunks,
+  multiOutputJsonText,
 }: {
   warnings: SharedV3Warning[];
   modelId: string;
   generateId: () => string;
   includeRawChunks: boolean | undefined;
+  multiOutputJsonText: boolean;
 }) {
   let usage: SvgUsage | undefined;
   let sentResponseMetadata = false;
   const outputStates = new Map<string, StreamOutputState>();
+  let activeJsonTextId: string | null = null;
   let sawError = false;
 
   return new TransformStream<
@@ -331,6 +344,20 @@ export function createV3StreamTransformer({
       // reasoning/generating events are transitional and intentionally ignored
       // here.
       if (value.type === "reasoning" || value.type === "generating") {
+        return;
+      }
+
+      if (multiOutputJsonText) {
+        if (activeJsonTextId == null) {
+          activeJsonTextId = generateId();
+          controller.enqueue({ type: "text-start", id: activeJsonTextId });
+        }
+
+        controller.enqueue({
+          type: "text-delta",
+          id: activeJsonTextId,
+          delta: `${toStreamJsonEvent(value)}\n`,
+        });
         return;
       }
 
@@ -402,6 +429,19 @@ export function createV3StreamTransformer({
     },
 
     flush(controller) {
+      if (multiOutputJsonText) {
+        if (activeJsonTextId != null) {
+          controller.enqueue({ type: "text-end", id: activeJsonTextId });
+        }
+
+        controller.enqueue({
+          type: "finish",
+          finishReason: mapQuiverFinishReasonV3(sawError ? "error" : "stop"),
+          usage: convertQuiverUsageV3(usage),
+        });
+        return;
+      }
+
       const orderedOutputStates = getOrderedOutputStates(outputStates);
 
       for (const outputState of orderedOutputStates) {
@@ -448,15 +488,18 @@ export function createV2StreamTransformer({
   modelId,
   generateId,
   includeRawChunks,
+  multiOutputJsonText,
 }: {
   warnings: LanguageModelV2CallWarning[];
   modelId: string;
   generateId: () => string;
   includeRawChunks: boolean | undefined;
+  multiOutputJsonText: boolean;
 }) {
   let usage: SvgUsage | undefined;
   let sentResponseMetadata = false;
   const outputStates = new Map<string, StreamOutputState>();
+  let activeJsonTextId: string | null = null;
   let sawError = false;
 
   return new TransformStream<
@@ -495,6 +538,20 @@ export function createV2StreamTransformer({
       // reasoning/generating events are transitional and intentionally ignored
       // here.
       if (value.type === "reasoning" || value.type === "generating") {
+        return;
+      }
+
+      if (multiOutputJsonText) {
+        if (activeJsonTextId == null) {
+          activeJsonTextId = generateId();
+          controller.enqueue({ type: "text-start", id: activeJsonTextId });
+        }
+
+        controller.enqueue({
+          type: "text-delta",
+          id: activeJsonTextId,
+          delta: `${toStreamJsonEvent(value)}\n`,
+        });
         return;
       }
 
@@ -566,6 +623,19 @@ export function createV2StreamTransformer({
     },
 
     flush(controller) {
+      if (multiOutputJsonText) {
+        if (activeJsonTextId != null) {
+          controller.enqueue({ type: "text-end", id: activeJsonTextId });
+        }
+
+        controller.enqueue({
+          type: "finish",
+          finishReason: mapQuiverFinishReasonV2(sawError ? "error" : "stop"),
+          usage: convertQuiverUsageV2(usage),
+        });
+        return;
+      }
+
       for (const outputState of getOrderedOutputStates(outputStates)) {
         if (outputState.activeReasoningId != null) {
           controller.enqueue({

@@ -55,7 +55,7 @@ Streaming behavior is intentionally mapped as:
 
 QuiverAI `draft` is currently streamed token-by-token without higher-level chunking, so the provider forwards those deltas directly as AI SDK reasoning updates.
 
-For `n > 1` streaming calls, QuiverAI events may be interleaved across outputs. Use the stable output identifiers (`index` and `id`) in stream events to route chunks per output.
+For `n > 1` streaming calls, the provider emits NDJSON on a single text stream (`result.textStream` / `result.text`). Each line includes `index`, `id`, `type`, and `svg` so clients can split and render per-output streams.
 
 ## Examples
 

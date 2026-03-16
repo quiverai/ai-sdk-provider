@@ -139,7 +139,7 @@ describe("QuiverV2LanguageModel", () => {
     expect(parts).toMatchSnapshot();
   });
 
-  it("supports streaming with QuiverAI n > 1 and maps interleaved outputs", async () => {
+  it("supports streaming with QuiverAI n > 1 as a single JSON text stream", async () => {
     server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
       type: "stream-chunks",
       chunks: multiOutputGenerateStreamChunksFixture,
@@ -170,8 +170,48 @@ describe("QuiverV2LanguageModel", () => {
     });
     expect(
       parts.filter((part) => part.type === "reasoning-start"),
-    ).toHaveLength(2);
-    expect(parts.filter((part) => part.type === "text-start")).toHaveLength(2);
+    ).toHaveLength(0);
+    expect(parts.filter((part) => part.type === "text-start")).toHaveLength(1);
+
+    const jsonLines = parts
+      .filter((part) => part.type === "text-delta")
+      .map((part) => part.delta)
+      .join("")
+      .trim()
+      .split("\n")
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line));
+    expect(jsonLines).toEqual([
+      {
+        index: 0,
+        id: "svg-stream-0",
+        type: "draft",
+        svg: "<svg>",
+      },
+      {
+        index: 1,
+        id: "svg-stream-1",
+        type: "draft",
+        svg: "<svg>",
+      },
+      {
+        index: 0,
+        id: "svg-stream-0",
+        type: "content",
+        svg: '<svg><rect width="10" height="10"/></svg>',
+      },
+      {
+        index: 1,
+        id: "svg-stream-1",
+        type: "content",
+        svg: '<svg><circle cx="5" cy="5" r="4"/></svg>',
+        usage: {
+          total_tokens: 36,
+          input_tokens: 12,
+          output_tokens: 24,
+        },
+      },
+    ]);
     expect(parts[parts.length - 1]).toEqual({
       type: "finish",
       finishReason: "stop",

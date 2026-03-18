@@ -14,3 +14,9 @@ export type {
   QuiverLanguageModelOptions,
   QuiverOperation,
 } from "./language-model/quiverai-language-model-options";
+export type {
+  StreamSvgEvent,
+  StreamSvgResult,
+  StreamSvgOptions,
+} from "./stream-svg";
+export { streamSvg } from "./stream-svg";

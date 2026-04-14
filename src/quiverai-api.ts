@@ -177,7 +177,7 @@ type ImageInput =
       url: string;
     };
 
-export function getOperationPath(operation: QuiverOperation) {
+function getOperationPath(operation: QuiverOperation) {
   return operation === "generate"
     ? "/svgs/generations"
     : "/svgs/vectorizations";

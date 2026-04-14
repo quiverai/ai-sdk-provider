@@ -33,12 +33,7 @@ export class QuiverAIImageModel implements ImageModelV4 {
       aspectRatio: options.aspectRatio,
       seed: options.seed,
       mask: options.mask,
-      stream:
-        options.providerOptions?.quiverai != null &&
-        typeof options.providerOptions.quiverai === "object" &&
-        "stream" in options.providerOptions.quiverai
-          ? (options.providerOptions.quiverai.stream as boolean | undefined)
-          : undefined,
+      stream: providerOptions.stream,
     });
 
     const { value: response, responseHeaders } = await postGenerateRequest({

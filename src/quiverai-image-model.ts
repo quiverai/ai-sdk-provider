@@ -1,31 +1,30 @@
-import { ImageModelV3, ImageModelV3CallOptions } from "@ai-sdk/provider";
-import { QuiverApiConfig } from "./quiverai-config";
+import { ImageModelV4, ImageModelV4CallOptions } from "@ai-sdk/provider";
+import { QuiverAIConfig } from "./quiverai-config";
 import {
   buildRequestBody,
   collectWarnings,
   convertResponseToImages,
   convertResponseToProviderMetadata,
   convertUsage,
-  parseQuiverImageOptions,
+  parseQuiverAIImageModelOptions,
   postGenerateRequest,
 } from "./quiverai-api";
+import { QuiverAIImageModelId } from "./quiverai-image-settings";
 
-export class QuiverImageModel implements ImageModelV3 {
-  readonly specificationVersion = "v3" as const;
+export class QuiverAIImageModel implements ImageModelV4 {
+  readonly specificationVersion = "v4" as const;
   readonly provider: string;
-  readonly modelId: string;
   readonly maxImagesPerCall = 16;
 
   constructor(
-    modelId: string,
-    private readonly config: QuiverApiConfig,
+    readonly modelId: QuiverAIImageModelId,
+    private readonly config: QuiverAIConfig,
   ) {
     this.provider = config.provider;
-    this.modelId = modelId;
   }
 
-  async doGenerate(options: ImageModelV3CallOptions) {
-    const providerOptions = await parseQuiverImageOptions(
+  async doGenerate(options: ImageModelV4CallOptions) {
+    const providerOptions = await parseQuiverAIImageModelOptions(
       options.providerOptions,
     );
 
@@ -34,6 +33,7 @@ export class QuiverImageModel implements ImageModelV3 {
       aspectRatio: options.aspectRatio,
       seed: options.seed,
       mask: options.mask,
+      stream: providerOptions.stream,
     });
 
     const { value: response, responseHeaders } = await postGenerateRequest({
@@ -43,7 +43,7 @@ export class QuiverImageModel implements ImageModelV3 {
         n: options.n,
         prompt: options.prompt,
         files: options.files,
-        operation: providerOptions.operation,
+        providerOptions,
       }),
       headers: options.headers,
       abortSignal: options.abortSignal,

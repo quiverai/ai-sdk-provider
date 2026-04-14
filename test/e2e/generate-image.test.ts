@@ -5,7 +5,7 @@ import {
   generateSvgResponseFixture,
   vectorizeSvgResponseFixture,
 } from "../../src/__fixtures__/quiverai-fixtures";
-import { createQuiverImage } from "../../src";
+import { createQuiverAI } from "../../src";
 
 const decoder = new TextDecoder();
 
@@ -27,9 +27,9 @@ void server;
 
 describe("generateImage e2e", () => {
   it("generates SVG image data through the image provider export", async () => {
-    const provider = createQuiverImage({ apiKey: "test-api-key", fetch });
+    const provider = createQuiverAI({ apiKey: "test-api-key", fetch });
     const result = await generateImage({
-      model: provider("quiver-image-preview"),
+      model: provider.image("arrow-preview"),
       prompt: "Draw a square icon.",
     });
 
@@ -40,7 +40,7 @@ describe("generateImage e2e", () => {
     expect(result.providerMetadata.quiverai).toEqual({
       images: [{ index: 0, mimeType: "image/svg+xml" }],
     });
-    expect(result.responses[0].modelId).toBe("quiver-image-preview");
+    expect(result.responses[0].modelId).toBe("arrow-preview");
     expect(result.usage).toEqual({
       inputTokens: 12,
       outputTokens: 9,
@@ -49,9 +49,9 @@ describe("generateImage e2e", () => {
   });
 
   it("vectorizes an input image through the same generateImage surface", async () => {
-    const provider = createQuiverImage({ apiKey: "test-api-key", fetch });
+    const provider = createQuiverAI({ apiKey: "test-api-key", fetch });
     const result = await generateImage({
-      model: provider("quiver-image-preview"),
+      model: provider.image("arrow-preview"),
       prompt: {
         images: [new Uint8Array([1, 2, 3])],
       },

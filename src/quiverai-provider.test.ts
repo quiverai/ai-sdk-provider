@@ -1,5 +1,5 @@
 import {
-  ImageModelV3CallOptions,
+  ImageModelV4CallOptions,
   InvalidArgumentError,
   NoSuchModelError,
 } from "@ai-sdk/provider";
@@ -9,7 +9,7 @@ import {
   generateSvgResponseFixture,
   vectorizeSvgResponseFixture,
 } from "./__fixtures__/quiverai-fixtures";
-import { createQuiverImage } from "./quiverai-image-provider";
+import { createQuiverAI } from "./quiverai-provider";
 
 const decoder = new TextDecoder();
 
@@ -40,7 +40,7 @@ const server = createTestServer({
   },
 });
 
-const generateOptions: ImageModelV3CallOptions = {
+const generateOptions: ImageModelV4CallOptions = {
   prompt: "Draw a square icon.",
   n: 1,
   size: undefined,
@@ -51,16 +51,16 @@ const generateOptions: ImageModelV3CallOptions = {
   providerOptions: {},
 };
 
-describe("createQuiverImage", () => {
+describe("createQuiverAI", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
   it("uses the default base URL and auth headers", async () => {
-    const provider = createQuiverImage({ apiKey: "test-api-key" });
-    const result = await provider("quiver-image-preview").doGenerate(
-      generateOptions,
-    );
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
+    const result = await provider
+      .image("arrow-preview")
+      .doGenerate(generateOptions);
     const image = result.images[0];
 
     expect(result.images).toHaveLength(1);
@@ -91,10 +91,8 @@ describe("createQuiverImage", () => {
     vi.stubEnv("QUIVERAI_API_KEY", "env-api-key");
     vi.stubEnv("QUIVERAI_BASE_URL", "https://env.quiver.ai/v1");
 
-    const provider = createQuiverImage();
-    await provider
-      .imageModel("quiver-image-preview")
-      .doGenerate(generateOptions);
+    const provider = createQuiverAI();
+    await provider.imageModel("arrow-preview").doGenerate(generateOptions);
 
     expect(server.calls).toHaveLength(1);
     expect(server.calls[0].requestUrl).toBe(
@@ -105,24 +103,22 @@ describe("createQuiverImage", () => {
     );
   });
 
-  it("prefers explicit options and exposes the image model factory methods", async () => {
+  it("prefers explicit options and exposes BFL-style image factory methods", async () => {
     vi.stubEnv("QUIVERAI_API_KEY", "env-api-key");
     vi.stubEnv("QUIVERAI_BASE_URL", "https://env.quiver.ai/v1");
 
-    const provider = createQuiverImage({
+    const provider = createQuiverAI({
       apiKey: "override-api-key",
       baseURL: "https://override.quiver.ai/v1",
       headers: { "X-QuiverAI-Test": "1" },
     });
 
-    expect(provider("quiver-image-preview").modelId).toBe(
-      "quiver-image-preview",
-    );
-    expect(provider.imageModel("quiver-image-preview").provider).toBe(
-      "quiverai",
+    expect(provider.image("arrow-preview").modelId).toBe("arrow-preview");
+    expect(provider.imageModel("arrow-preview").provider).toBe(
+      "quiverai.image",
     );
 
-    await provider("quiver-image-preview").doGenerate(generateOptions);
+    await provider.image("arrow-preview").doGenerate(generateOptions);
 
     expect(server.calls[0].requestUrl).toBe(
       "https://override.quiver.ai/v1/svgs/generations",
@@ -134,7 +130,7 @@ describe("createQuiverImage", () => {
   });
 
   it("throws for unsupported language and embedding models", () => {
-    const provider = createQuiverImage({ apiKey: "test-api-key" });
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
 
     expect(() => provider.languageModel("chat-model")).toThrow(
       NoSuchModelError,
@@ -142,11 +138,14 @@ describe("createQuiverImage", () => {
     expect(() => provider.embeddingModel("embed-model")).toThrow(
       NoSuchModelError,
     );
+    expect(() => provider.textEmbeddingModel("embed-model")).toThrow(
+      NoSuchModelError,
+    );
   });
 
   it("vectorizes an image when requested through providerOptions", async () => {
-    const provider = createQuiverImage({ apiKey: "test-api-key" });
-    const result = await provider("quiver-image-preview").doGenerate({
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
+    const result = await provider.image("arrow-preview").doGenerate({
       ...generateOptions,
       prompt: undefined,
       files: [
@@ -166,7 +165,7 @@ describe("createQuiverImage", () => {
       "https://api.quiver.ai/v1/svgs/vectorizations",
     );
     expect(await server.calls[0].requestBodyJson).toMatchObject({
-      model: "quiver-image-preview",
+      model: "arrow-preview",
       n: 1,
       image: {
         base64: "AQID",
@@ -174,11 +173,95 @@ describe("createQuiverImage", () => {
     });
   });
 
+  it("forwards docs-backed generation options and reference images", async () => {
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
+
+    await provider.image("arrow-preview").doGenerate({
+      ...generateOptions,
+      files: [
+        {
+          type: "url",
+          url: "https://example.com/reference-1.png",
+        },
+        {
+          type: "file",
+          mediaType: "image/png",
+          data: new Uint8Array([4, 5, 6]),
+        },
+      ],
+      providerOptions: {
+        quiverai: {
+          instructions: "Use a flat monochrome style with clean geometry.",
+          temperature: 0.4,
+          topP: 0.95,
+          presencePenalty: 0.2,
+          maxOutputTokens: 4096,
+          stream: true,
+        },
+      },
+    });
+
+    expect(await server.calls[0].requestBodyJson).toMatchObject({
+      model: "arrow-preview",
+      prompt: "Draw a square icon.",
+      instructions: "Use a flat monochrome style with clean geometry.",
+      temperature: 0.4,
+      top_p: 0.95,
+      presence_penalty: 0.2,
+      max_output_tokens: 4096,
+      stream: false,
+      references: [
+        { url: "https://example.com/reference-1.png" },
+        { base64: "BAUG" },
+      ],
+    });
+  });
+
+  it("forwards docs-backed vectorize options", async () => {
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
+
+    await provider.image("arrow-preview").doGenerate({
+      ...generateOptions,
+      prompt: undefined,
+      files: [
+        {
+          type: "url",
+          url: "https://example.com/logo.png",
+        },
+      ],
+      providerOptions: {
+        quiverai: {
+          operation: "vectorize",
+          temperature: 0.4,
+          topP: 0.95,
+          presencePenalty: 0.2,
+          maxOutputTokens: 4096,
+          autoCrop: true,
+          targetSize: 1024,
+        },
+      },
+    });
+
+    expect(await server.calls[0].requestBodyJson).toMatchObject({
+      model: "arrow-preview",
+      image: {
+        url: "https://example.com/logo.png",
+      },
+      temperature: 0.4,
+      top_p: 0.95,
+      presence_penalty: 0.2,
+      max_output_tokens: 4096,
+      auto_crop: true,
+      target_size: 1024,
+      stream: false,
+    });
+  });
+
   it("fails fast when vectorize is requested without an input image", async () => {
-    const provider = createQuiverImage({ apiKey: "test-api-key" });
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
 
     await expect(
-      provider("quiver-image-preview").doGenerate({
+      provider.image("arrow-preview").doGenerate({
         ...generateOptions,
         prompt: undefined,
         providerOptions: { quiverai: { operation: "vectorize" } },

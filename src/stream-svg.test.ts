@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { LanguageModelV3 } from "@ai-sdk/provider";
 import { streamSvg, StreamSvgEvent } from "./stream-svg";
 
 const toTextStream = (chunks: string[]): AsyncIterable<string> => {
@@ -29,17 +30,22 @@ describe("streamSvg", () => {
 
     const payload =
       events.map((event) => JSON.stringify(event)).join("\n") + "\n";
+    let receivedOpts: Record<string, unknown> | undefined;
     const ai = {
-      streamText: () => ({
-        textStream: toTextStream([payload.slice(0, 20), payload.slice(20)]),
-      }),
+      streamText: (opts: Record<string, unknown>) => {
+        receivedOpts = opts;
+        return {
+          textStream: toTextStream([payload.slice(0, 20), payload.slice(20)]),
+        };
+      },
     };
 
     const results = [];
     for await (const result of streamSvg(ai, {
-      model: "arrow-preview",
+      model: {} as LanguageModelV3,
       n: 2,
       prompt: "Draw",
+      onEvent: () => undefined,
     })) {
       results.push(result);
     }
@@ -49,5 +55,28 @@ describe("streamSvg", () => {
     expect(results[0].usage).toEqual({ total_tokens: 10 });
     expect(results[1].index).toBe(1);
     expect(results[1].usage).toEqual({ total_tokens: 12 });
+    expect(receivedOpts).not.toHaveProperty("onEvent");
+  });
+
+  it("handles default n=1 plain text stream output", async () => {
+    const ai = {
+      streamText: () => ({
+        textStream: toTextStream(["<svg>", "<rect/>", "</svg>"]),
+      }),
+    };
+
+    const results = [];
+    for await (const result of streamSvg(ai, {
+      model: {} as LanguageModelV3,
+      prompt: "Draw",
+    })) {
+      results.push(result);
+    }
+
+    expect(results).toHaveLength(1);
+    expect(results[0].index).toBe(0);
+    expect(new TextDecoder().decode(results[0].file.uint8Array)).toBe(
+      "<svg><rect/></svg>",
+    );
   });
 });

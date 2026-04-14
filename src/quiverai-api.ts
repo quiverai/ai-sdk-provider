@@ -1,5 +1,6 @@
 import { InvalidArgumentError, SharedV3Warning } from "@ai-sdk/provider";
 import {
+  combineHeaders,
   createJsonResponseHandler,
   convertUint8ArrayToBase64,
   parseProviderOptions,
@@ -143,7 +144,7 @@ export async function postGenerateRequest({
 }) {
   return postJsonToApi({
     url: config.url(getOperationPath(operation)),
-    headers: { ...config.headers(), ...headers },
+    headers: combineHeaders(config.headers(), headers),
     body,
     failedResponseHandler: quiveraiFailedResponseHandler,
     successfulResponseHandler: createJsonResponseHandler(

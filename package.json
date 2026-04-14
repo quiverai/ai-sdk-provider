@@ -44,7 +44,8 @@
     "test:edge": "vitest --config vitest.edge.config.js --run",
     "test:e2e": "vitest --config vitest.node.config.js --run test/e2e",
     "test:update": "vitest --config vitest.node.config.js --run -u",
-    "test:watch": "vitest --config vitest.node.config.js"
+    "test:watch": "vitest --config vitest.node.config.js",
+    "example:stream-svg": "pnpm build && tsx examples/stream-svg.ts"
   },
   "dependencies": {
     "@ai-sdk/provider": "3.0.8",

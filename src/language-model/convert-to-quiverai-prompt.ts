@@ -119,7 +119,7 @@ export function convertToQuiverPrompt({
     };
   }
 
-  if (systemText) {
+  if (systemMessages.length > 0) {
     throw new InvalidPromptError({
       prompt,
       message:

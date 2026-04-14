@@ -85,6 +85,18 @@ describe("createQuiver", () => {
     );
   });
 
+  it("falls back to the default base URL when QUIVERAI_BASE_URL is empty", async () => {
+    vi.stubEnv("QUIVERAI_API_KEY", "env-api-key");
+    vi.stubEnv("QUIVERAI_BASE_URL", "");
+
+    const provider = createQuiver();
+    await provider.chat("arrow-preview").doGenerate(generateOptions);
+
+    expect(server.calls[0].requestUrl).toBe(
+      "https://api.quiver.ai/v1/svgs/generations",
+    );
+  });
+
   it("prefers explicit options and exposes the standard factory methods", async () => {
     vi.stubEnv("QUIVERAI_API_KEY", "env-api-key");
     vi.stubEnv("QUIVERAI_BASE_URL", "https://env.quiver.ai/v1");

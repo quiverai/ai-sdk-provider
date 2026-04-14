@@ -1,8 +1,4 @@
-import {
-  APICallError,
-  LanguageModelV2CallOptions,
-  UnsupportedFunctionalityError,
-} from "@ai-sdk/provider";
+import { APICallError, LanguageModelV2CallOptions } from "@ai-sdk/provider";
 import {
   convertReadableStreamToArray,
   mockId,
@@ -15,6 +11,7 @@ import {
   generateSvgResponseFixture,
   malformedSvgResponseFixture,
   malformedStreamChunksFixture,
+  multiOutputGenerateStreamChunksFixture,
   multiOutputSvgResponseFixture,
   nonContentUsageStreamChunksFixture,
 } from "./__fixtures__/quiverai-fixtures";
@@ -142,18 +139,90 @@ describe("QuiverV2LanguageModel", () => {
     expect(parts).toMatchSnapshot();
   });
 
-  it("rejects streaming with QuiverAI n > 1", async () => {
-    await expect(
-      model.doStream({
-        ...generateOptions,
-        providerOptions: {
-          quiverai: {
-            operation: "generate",
-            n: 2,
-          },
-        },
+  it("supports streaming with QuiverAI n > 1 as a single JSON text stream", async () => {
+    server.urls["https://api.quiver.ai/v1/svgs/generations"].response = {
+      type: "stream-chunks",
+      chunks: multiOutputGenerateStreamChunksFixture,
+    };
+
+    const multiOutputModel = new QuiverV2LanguageModel(
+      "arrow-preview",
+      createQuiverConfig({
+        apiKey: "test-api-key",
+        generateId: mockId({ prefix: "multi-output-v2" }),
       }),
-    ).rejects.toBeInstanceOf(UnsupportedFunctionalityError);
+    );
+
+    const result = await multiOutputModel.doStream({
+      ...generateOptions,
+      providerOptions: {
+        quiverai: {
+          operation: "generate",
+          n: 2,
+        },
+      },
+    });
+    const parts = await convertReadableStreamToArray(result.stream);
+
+    expect(result.request?.body).toMatchObject({
+      n: 2,
+      stream: true,
+    });
+    expect(
+      parts.filter((part) => part.type === "reasoning-start"),
+    ).toHaveLength(0);
+    expect(parts.filter((part) => part.type === "text-start")).toHaveLength(1);
+
+    const jsonLines = parts
+      .filter((part) => part.type === "text-delta")
+      .map((part) => part.delta)
+      .join("")
+      .trim()
+      .split("\n")
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line));
+    expect(jsonLines).toEqual([
+      {
+        index: 0,
+        id: "svg-stream-0",
+        type: "draft",
+        svg: "<svg>",
+      },
+      {
+        index: 1,
+        id: "svg-stream-1",
+        type: "draft",
+        svg: "<svg>",
+      },
+      {
+        index: 0,
+        id: "svg-stream-0",
+        type: "content",
+        svg: '<svg><rect width="10" height="10"/></svg>',
+      },
+      {
+        index: 1,
+        id: "svg-stream-1",
+        type: "content",
+        svg: '<svg><circle cx="5" cy="5" r="4"/></svg>',
+        usage: {
+          total_tokens: 36,
+          input_tokens: 12,
+          output_tokens: 24,
+        },
+      },
+    ]);
+    expect(parts[parts.length - 1]).toEqual({
+      type: "finish",
+      finishReason: "stop",
+      usage: {
+        cachedInputTokens: undefined,
+        inputTokens: 12,
+        outputTokens: 24,
+        reasoningTokens: undefined,
+        totalTokens: 36,
+      },
+    });
   });
 
   it("throws on malformed successful responses", async () => {

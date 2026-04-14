@@ -99,6 +99,7 @@ export class QuiverV2LanguageModel implements LanguageModelV2 {
           modelId: this.modelId,
           generateId: this.createId,
           includeRawChunks: options.includeRawChunks,
+          multiOutputJsonText: body.n > 1,
         }),
       ),
       request: { body: { ...body, stream: true } },

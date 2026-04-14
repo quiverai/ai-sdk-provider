@@ -24,6 +24,7 @@ export type SvgResponse = z.infer<typeof svgResponseSchema>;
 
 export const svgStreamChunkSchema = z.object({
   type: z.enum(["reasoning", "generating", "draft", "content"]),
+  index: z.number().int().nonnegative().optional(),
   id: z.string().min(1).optional(),
   svg: z.string().default(""),
   text: z.string().optional(),

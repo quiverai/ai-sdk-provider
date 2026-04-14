@@ -1,4 +1,5 @@
 import { convertUint8ArrayToBase64 } from "@ai-sdk/provider-utils";
+import type { LanguageModelV3 } from "@ai-sdk/provider";
 
 export type StreamSvgEvent = {
   index: number;
@@ -23,7 +24,7 @@ export type StreamSvgResult = {
 };
 
 export type StreamSvgOptions = {
-  model: string;
+  model: LanguageModelV3;
   prompt?: string;
   messages?: unknown;
   providerOptions?: Record<string, unknown>;
@@ -39,7 +40,7 @@ export async function* streamSvg(
   ai: { streamText: (opts: any) => { textStream: AsyncIterable<string> } },
   options: StreamSvgOptions,
 ): AsyncGenerator<StreamSvgResult> {
-  const { providerOptions, n, ...rest } = options;
+  const { providerOptions, n, onEvent, ...rest } = options;
   const mergedProviderOptions = {
     ...providerOptions,
     quiverai: {
@@ -64,7 +65,7 @@ export async function* streamSvg(
       if (!line) continue;
 
       const event: StreamSvgEvent = JSON.parse(line);
-      options.onEvent?.(event);
+      onEvent?.(event);
       if (event.type !== "content") continue;
 
       const data = new TextEncoder().encode(event.svg);
@@ -79,4 +80,22 @@ export async function* streamSvg(
       };
     }
   }
+
+  const line = buffer.trim();
+  if (!line) return;
+
+  const event: StreamSvgEvent = JSON.parse(line);
+  onEvent?.(event);
+  if (event.type !== "content") return;
+
+  const data = new TextEncoder().encode(event.svg);
+  yield {
+    index: event.index,
+    usage: event.usage,
+    file: {
+      mediaType: "image/svg+xml",
+      uint8Array: data,
+      base64: convertUint8ArrayToBase64(data),
+    },
+  };
 }

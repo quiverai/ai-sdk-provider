@@ -16,7 +16,7 @@ export interface QuiverProviderSettings {
   generateId?: () => string;
 }
 
-export type QuiverLanguageModelConfig = {
+export type QuiverApiConfig = {
   provider: string;
   url: (path: string) => string;
   headers: () => Record<string, string>;
@@ -26,7 +26,7 @@ export type QuiverLanguageModelConfig = {
 
 export function createQuiverConfig(
   options: QuiverProviderSettings = {},
-): QuiverLanguageModelConfig {
+): QuiverApiConfig {
   const baseURL =
     withoutTrailingSlash(
       loadOptionalSetting({

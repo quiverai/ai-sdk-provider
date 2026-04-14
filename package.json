@@ -29,10 +29,7 @@
     "build": "pnpm clean && tsup --tsconfig tsconfig.build.json",
     "build:watch": "pnpm clean && tsup --watch",
     "clean": "del-cli dist coverage test-results *.tsbuildinfo",
-    "example:generate": "pnpm build && tsx examples/generate-text.ts",
-    "example:stream": "pnpm build && tsx examples/stream-text.ts",
-    "example:vectorize": "pnpm build && tsx examples/vectorize-file.ts",
-    "example:multi-output": "pnpm build && tsx examples/multi-output.ts",
+    "example:generate-image": "pnpm build && tsx examples/generate-image.ts",
     "fmt": "prettier --write \"./**/*.{ts,tsx,js,json,md}\"",
     "fmt:check": "prettier --check \"./**/*.{ts,tsx,js,json,md}\"",
     "lint": "eslint \"./**/*.ts\" \"./**/*.js\"",
@@ -43,7 +40,6 @@
     "test:node": "vitest --config vitest.node.config.js --run",
     "test:edge": "vitest --config vitest.edge.config.js --run",
     "test:e2e": "vitest --config vitest.node.config.js --run test/e2e",
-    "test:update": "vitest --config vitest.node.config.js --run -u",
     "test:watch": "vitest --config vitest.node.config.js"
   },
   "dependencies": {

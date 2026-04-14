@@ -196,6 +196,7 @@ describe("createQuiverAI", () => {
           topP: 0.95,
           presencePenalty: 0.2,
           maxOutputTokens: 4096,
+          stream: true,
         },
       },
     });

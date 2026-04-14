@@ -95,7 +95,7 @@ export function buildRequestBody({
     top_p: providerOptions.topP,
     presence_penalty: providerOptions.presencePenalty,
     max_output_tokens: providerOptions.maxOutputTokens,
-    ...(providerOptions.stream ? {} : { stream: false as const }),
+    stream: false as const,
   };
 
   if (providerOptions.operation === "generate") {

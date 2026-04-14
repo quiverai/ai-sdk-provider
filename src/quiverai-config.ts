@@ -7,26 +7,37 @@ import {
 } from "@ai-sdk/provider-utils";
 import { VERSION } from "./version";
 
-export interface QuiverProviderSettings {
+export interface QuiverAIProviderSettings {
+  /**
+   * QuiverAI API key. Default value is taken from the `QUIVERAI_API_KEY`
+   * environment variable.
+   */
   apiKey?: string;
+  /**
+   * Base URL for the API calls. Defaults to `https://api.quiver.ai/v1`.
+   */
   baseURL?: string;
+  /**
+   * Custom headers to include in the requests.
+   */
   headers?: Record<string, string>;
+  /**
+   * Custom fetch implementation. You can use it as a middleware to intercept
+   * requests, or to provide a custom fetch implementation for testing.
+   */
   fetch?: FetchFunction;
-  name?: string;
-  generateId?: () => string;
 }
 
-export type QuiverLanguageModelConfig = {
+export type QuiverAIConfig = {
   provider: string;
   url: (path: string) => string;
   headers: () => Record<string, string>;
   fetch?: FetchFunction;
-  generateId?: () => string;
 };
 
-export function createQuiverConfig(
-  options: QuiverProviderSettings = {},
-): QuiverLanguageModelConfig {
+export function createQuiverAIConfig(
+  options: QuiverAIProviderSettings = {},
+): QuiverAIConfig {
   const baseURL =
     withoutTrailingSlash(
       loadOptionalSetting({
@@ -34,8 +45,6 @@ export function createQuiverConfig(
         environmentVariableName: "QUIVERAI_BASE_URL",
       }),
     ) ?? "https://api.quiver.ai/v1";
-
-  const providerName = options.name ?? "quiverai";
 
   const headers = () =>
     withUserAgentSuffix(
@@ -51,10 +60,9 @@ export function createQuiverConfig(
     );
 
   return {
-    provider: providerName,
+    provider: "quiverai.image",
     url: (path) => `${baseURL}${path}`,
     headers,
     fetch: options.fetch,
-    generateId: options.generateId,
   };
 }

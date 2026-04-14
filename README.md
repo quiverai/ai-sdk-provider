@@ -1,6 +1,7 @@
 # @quiverai/vercel-ai-provider
 
-QuiverAI provider for the Vercel AI SDK.
+The QuiverAI provider for the Vercel AI SDK adds image model support for the
+QuiverAI API.
 
 ## Installation
 
@@ -9,6 +10,13 @@ pnpm add ai @quiverai/vercel-ai-provider
 ```
 
 ## Setup
+
+The QuiverAI provider is available in the `@quiverai/vercel-ai-provider`
+module:
+
+```bash
+pnpm add @quiverai/vercel-ai-provider ai
+```
 
 Set your QuiverAI API key:
 
@@ -21,53 +29,133 @@ Optional environment variables:
 - `QUIVERAI_BASE_URL` to override the default `https://api.quiver.ai/v1`
 - `QUIVERAI_MODEL_ID` to override the default example model `arrow-preview`
 
-## Usage
+## Provider Instance
+
+You can import the default provider instance `quiverai` from
+`@quiverai/vercel-ai-provider`:
 
 ```ts
-import { generateText } from "ai";
+import { quiverai } from "@quiverai/vercel-ai-provider";
+```
+
+## Image Generation Example
+
+```ts
+import { generateImage } from "ai";
 import { quiverai } from "@quiverai/vercel-ai-provider";
 
-const result = await generateText({
-  model: quiverai("arrow-preview"),
-  prompt: "Generate a simple geometric SVG icon.",
+const { image } = await generateImage({
+  model: quiverai.image("arrow-preview"),
+  prompt: "A logo for the next AI Design startup",
+});
+
+const svg = new TextDecoder().decode(image.uint8Array);
+console.log(svg);
+```
+
+QuiverAI returns SVG documents. The generated SVG bytes are available through
+`result.image.uint8Array` / `result.images`.
+
+## Additional Options
+
+QuiverAI’s API reference documents extra generation controls for text-to-SVG
+and image-to-SVG requests. You can pass them through
+`providerOptions.quiverai`:
+
+- `operation`: choose between `generate` and `vectorize`
+- `instructions`: extra style guidance for prompt-based generation
+- `temperature`, `topP`, `presencePenalty`, `maxOutputTokens`
+- `autoCrop`, `targetSize` for vectorization
+- `prompt.images`: up to 4 reference images for prompt-based generation
+
+```ts
+import { generateImage } from "ai";
+import {
+  quiverai,
+  type QuiverAIImageModelOptions,
+} from "@quiverai/vercel-ai-provider";
+
+const { image } = await generateImage({
+  model: quiverai.image("arrow-preview"),
+  prompt: {
+    text: "Generate a geometric unicorn icon",
+    images: [new URL("https://example.com/reference-1.png")],
+  },
   providerOptions: {
     quiverai: {
-      operation: "generate",
-    },
+      instructions: "Use a flat monochrome style with clean geometry.",
+      temperature: 0.4,
+      topP: 0.95,
+      maxOutputTokens: 4096,
+    } satisfies QuiverAIImageModelOptions,
   },
 });
 
-console.log(result.text);
+console.log(new TextDecoder().decode(image.uint8Array));
 ```
 
-## QuiverAI Options
+## Image to SVG Example
 
-Use QuiverAI-specific options through `providerOptions.quiverai`:
+```ts
+import fs from "node:fs";
+import { generateImage } from "ai";
+import {
+  quiverai,
+  type QuiverAIImageModelOptions,
+} from "@quiverai/vercel-ai-provider";
 
-- `operation: "generate" | "vectorize"` is required
-- `n` controls non-streaming multi-output requests
-- `autoCrop` and `targetSize` are available for `vectorize`
+const result = await generateImage({
+  model: quiverai.image("arrow-preview"),
+  prompt: {
+    images: [fs.readFileSync("./logo.png")],
+  },
+  providerOptions: {
+    quiverai: {
+      operation: "vectorize",
+      autoCrop: true,
+      targetSize: 1024,
+    } satisfies QuiverAIImageModelOptions,
+  },
+});
+```
 
-Streaming behavior is intentionally mapped as:
+## Configuring Base URL
 
-- QuiverAI `draft` token deltas -> AI SDK reasoning
-- QuiverAI `content` snapshots -> AI SDK text
+By default, the provider uses `https://api.quiver.ai/v1`. You can override it:
 
-QuiverAI `draft` is currently streamed token-by-token without higher-level chunking, so the provider forwards those deltas directly as AI SDK reasoning updates.
+```ts
+import { createQuiverAI } from "@quiverai/vercel-ai-provider";
 
-Streaming currently supports only a single output. Use `generateText` with `providerOptions.quiverai.n` for multi-output generation.
+const customQuiverAI = createQuiverAI({
+  apiKey: process.env.QUIVERAI_API_KEY,
+  baseURL: "https://api.quiver.ai/v1",
+});
+```
 
-## Examples
+## Example Script
 
-This repo includes 4 small QuiverAI examples. They stay out of the published package and are only for local development.
-
-Run them from the repo root:
+The repo example writes `quiverai-output.svg` in the repo root:
 
 ```bash
-pnpm example:generate -- "Generate a simple geometric SVG icon."
-pnpm example:stream -- "Generate a simple geometric SVG icon."
-pnpm example:vectorize -- ./image.png
-pnpm example:multi-output -- "Generate two simple SVG icon variations."
+pnpm example:generate-image -- "Generate a simple geometric SVG icon."
 ```
 
-The examples import the public package entrypoint and build the package first so they behave like normal consumer code.
+## Scope
+
+This package intentionally ships the fast-path release surface only:
+
+- `generateImage` with `generate` and `vectorize`
+- Quiver auth, base URL overrides, and error handling
+
+It does not include the exploratory text or streaming integrations from the
+earlier provider implementation.
+
+## Exports
+
+- `createQuiverAI`
+- `quiverai`
+- `VERSION`
+- `QuiverAIProvider`
+- `QuiverAIProviderSettings`
+- `QuiverAIImageModelId`
+- `QuiverAIImageModelOptions`

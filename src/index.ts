@@ -1,16 +1,8 @@
-export {
-  createQuiver,
-  quiverai,
-  type QuiverProvider,
-} from "./quiverai-provider";
-export {
-  createQuiverV2,
-  quiveraiV2,
-  quiverV2,
-  type QuiverProviderV2,
-} from "./quiverai-v2-provider";
-export type { QuiverProviderSettings } from "./quiverai-config";
+export { createQuiverAI, quiverai } from "./quiverai-provider";
 export type {
-  QuiverLanguageModelOptions,
-  QuiverOperation,
-} from "./language-model/quiverai-language-model-options";
+  QuiverAIProvider,
+  QuiverAIProviderSettings,
+} from "./quiverai-provider";
+export type { QuiverAIImageModelId } from "./quiverai-image-settings";
+export type { QuiverAIImageModelOptions } from "./quiverai-api";
+export { VERSION } from "./version";

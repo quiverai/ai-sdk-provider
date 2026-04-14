@@ -1,11 +1,12 @@
 {
   "name": "@quiverai/vercel-ai-provider",
   "version": "0.1.0",
+  "type": "module",
   "license": "MIT",
   "sideEffects": false,
   "packageManager": "pnpm@10.23.0",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/**/*",
@@ -15,8 +16,8 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "engines": {
@@ -29,10 +30,7 @@
     "build": "pnpm clean && tsup --tsconfig tsconfig.build.json",
     "build:watch": "pnpm clean && tsup --watch",
     "clean": "del-cli dist coverage test-results *.tsbuildinfo",
-    "example:generate": "pnpm build && tsx examples/generate-text.ts",
-    "example:stream": "pnpm build && tsx examples/stream-text.ts",
-    "example:vectorize": "pnpm build && tsx examples/vectorize-file.ts",
-    "example:multi-output": "pnpm build && tsx examples/multi-output.ts",
+    "example:generate-image": "pnpm build && tsx examples/generate-image.ts",
     "fmt": "prettier --write \"./**/*.{ts,tsx,js,json,md}\"",
     "fmt:check": "prettier --check \"./**/*.{ts,tsx,js,json,md}\"",
     "lint": "eslint \"./**/*.ts\" \"./**/*.js\"",
@@ -43,19 +41,18 @@
     "test:node": "vitest --config vitest.node.config.js --run",
     "test:edge": "vitest --config vitest.edge.config.js --run",
     "test:e2e": "vitest --config vitest.node.config.js --run test/e2e",
-    "test:update": "vitest --config vitest.node.config.js --run -u",
     "test:watch": "vitest --config vitest.node.config.js"
   },
   "dependencies": {
-    "@ai-sdk/provider": "3.0.8",
-    "@ai-sdk/provider-utils": "4.0.19",
+    "@ai-sdk/provider": "4.0.0-beta.12",
+    "@ai-sdk/provider-utils": "5.0.0-beta.20",
     "zod": "4.1.8"
   },
   "devDependencies": {
     "@ai-sdk/test-server": "1.0.3",
     "@eslint/js": "9.39.1",
     "@types/node": "25.0.0",
-    "ai": "6.0.116",
+    "ai": "7.0.0-beta.89",
     "del-cli": "7.0.0",
     "edge-runtime": "4.0.1",
     "eslint": "9.39.1",

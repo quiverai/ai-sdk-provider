@@ -13,25 +13,14 @@ export const svgDocumentSchema = z.object({
   mime_type: z.literal("image/svg+xml"),
 });
 
-export const svgResponseSchema = z.object({
+export const svgGenerationResponseSchema = z.object({
   id: z.string().min(1),
   created: z.number().int().nonnegative(),
   data: z.array(svgDocumentSchema).min(1),
   usage: svgUsageSchema.optional(),
 });
 
-export type SvgResponse = z.infer<typeof svgResponseSchema>;
-
-export const svgStreamChunkSchema = z.object({
-  type: z.enum(["reasoning", "generating", "draft", "content"]),
-  id: z.string().min(1).optional(),
-  svg: z.string().default(""),
-  text: z.string().optional(),
-  reasoning: z.string().optional(),
-  usage: svgUsageSchema.optional(),
-});
-
-export type SvgStreamChunk = z.infer<typeof svgStreamChunkSchema>;
+export type SvgGenerationResponse = z.infer<typeof svgGenerationResponseSchema>;
 
 export const publicErrorEnvelopeSchema = z.object({
   status: z.number().int(),

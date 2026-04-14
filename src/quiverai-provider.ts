@@ -1,46 +1,50 @@
+import { ImageModelV4, NoSuchModelError, ProviderV4 } from "@ai-sdk/provider";
 import {
-  LanguageModelV3,
-  NoSuchModelError,
-  ProviderV3,
-} from "@ai-sdk/provider";
-import { createQuiverConfig, QuiverProviderSettings } from "./quiverai-config";
-import { QuiverLanguageModel } from "./language-model/quiverai-language-model";
+  createQuiverAIConfig,
+  QuiverAIProviderSettings,
+} from "./quiverai-config";
+import { QuiverAIImageModel } from "./quiverai-image-model";
+import { QuiverAIImageModelId } from "./quiverai-image-settings";
 
-export interface QuiverProvider extends ProviderV3 {
-  (modelId: string): LanguageModelV3;
-  languageModel(modelId: string): LanguageModelV3;
-  chat(modelId: string): LanguageModelV3;
+export type { QuiverAIProviderSettings } from "./quiverai-config";
+
+export interface QuiverAIProvider extends ProviderV4 {
+  /**
+   * Creates a model for image generation.
+   */
+  image(modelId: QuiverAIImageModelId): ImageModelV4;
+  /**
+   * Creates a model for image generation.
+   */
+  imageModel(modelId: QuiverAIImageModelId): ImageModelV4;
+  /**
+   * @deprecated Use `embeddingModel` instead.
+   */
+  textEmbeddingModel(modelId: string): never;
 }
 
-export function createQuiver(
-  options: QuiverProviderSettings = {},
-): QuiverProvider {
-  const config = createQuiverConfig(options);
+export function createQuiverAI(
+  options: QuiverAIProviderSettings = {},
+): QuiverAIProvider {
+  const config = createQuiverAIConfig(options);
 
-  const createLanguageModel = (modelId: string) =>
-    new QuiverLanguageModel(modelId, config);
+  const createImageModel = (modelId: QuiverAIImageModelId) =>
+    new QuiverAIImageModel(modelId, config);
 
-  const provider = function (modelId: string) {
-    if (new.target) {
-      throw new Error(
-        "The QuiverAI model function cannot be called with the new keyword.",
-      );
-    }
-
-    return createLanguageModel(modelId);
-  };
-
-  provider.specificationVersion = "v3" as const;
-  provider.languageModel = createLanguageModel;
-  provider.chat = createLanguageModel;
-  provider.embeddingModel = (modelId: string) => {
+  const embeddingModel = (modelId: string) => {
     throw new NoSuchModelError({ modelId, modelType: "embeddingModel" });
   };
-  provider.imageModel = (modelId: string) => {
-    throw new NoSuchModelError({ modelId, modelType: "imageModel" });
-  };
 
-  return provider as QuiverProvider;
+  return {
+    specificationVersion: "v4",
+    image: createImageModel,
+    imageModel: createImageModel,
+    languageModel: (modelId: string) => {
+      throw new NoSuchModelError({ modelId, modelType: "languageModel" });
+    },
+    embeddingModel,
+    textEmbeddingModel: embeddingModel,
+  };
 }
 
-export const quiverai = createQuiver();
+export const quiverai = createQuiverAI();

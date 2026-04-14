@@ -158,5 +158,4 @@ earlier provider implementation.
 - `QuiverAIProvider`
 - `QuiverAIProviderSettings`
 - `QuiverAIImageModelId`
-- `QuiverAIAspectRatio`
 - `QuiverAIImageModelOptions`

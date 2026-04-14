@@ -1,6 +1,7 @@
 # @quiverai/vercel-ai-provider
 
-Minimal QuiverAI image provider for the Vercel AI SDK.
+The QuiverAI provider for the Vercel AI SDK adds image model support for the
+QuiverAI API.
 
 ## Installation
 
@@ -9,6 +10,13 @@ pnpm add ai @quiverai/vercel-ai-provider
 ```
 
 ## Setup
+
+The QuiverAI provider is available in the `@quiverai/vercel-ai-provider`
+module:
+
+```bash
+pnpm add @quiverai/vercel-ai-provider ai
+```
 
 Set your QuiverAI API key:
 
@@ -19,57 +27,118 @@ export QUIVERAI_API_KEY=your_api_key
 Optional environment variables:
 
 - `QUIVERAI_BASE_URL` to override the default `https://api.quiver.ai/v1`
-- `QUIVERAI_MODEL_ID` to override the default example model `quiver-image-preview`
+- `QUIVERAI_MODEL_ID` to override the default example model `arrow-preview`
 
-## Usage with `generateImage`
+## Provider Instance
+
+You can import the default provider instance `quiverai` from
+`@quiverai/vercel-ai-provider`:
+
+```ts
+import { quiverai } from "@quiverai/vercel-ai-provider";
+```
+
+## Image Generation Example
 
 ```ts
 import { generateImage } from "ai";
-import { quiverImage } from "@quiverai/vercel-ai-provider";
+import { quiverai } from "@quiverai/vercel-ai-provider";
 
-const result = await generateImage({
-  model: quiverImage("quiver-image-preview"),
-  prompt: "Generate a simple geometric SVG icon.",
+const { image } = await generateImage({
+  model: quiverai.image("arrow-preview"),
+  prompt: "A logo for the next AI Design startup",
 });
 
-const svg = new TextDecoder().decode(result.image.uint8Array);
+const svg = new TextDecoder().decode(image.uint8Array);
 console.log(svg);
 ```
 
 QuiverAI returns SVG documents. The generated SVG bytes are available through
 `result.image.uint8Array` / `result.images`.
 
-Use `providerOptions.quiverai.operation` to choose the mode:
+## Additional Options
 
-- `generate` for prompt-based SVG generation
-- `vectorize` for image-to-SVG vectorization
+QuiverAI’s API reference documents extra generation controls for text-to-SVG
+and image-to-SVG requests. You can pass them through
+`providerOptions.quiverai`:
 
-Vectorize example:
+- `operation`: choose between `generate` and `vectorize`
+- `instructions`: extra style guidance for prompt-based generation
+- `temperature`, `topP`, `presencePenalty`, `maxOutputTokens`
+- `autoCrop`, `targetSize` for vectorization
+- `prompt.images`: up to 4 reference images for prompt-based generation
 
 ```ts
 import { generateImage } from "ai";
-import { quiverImage } from "@quiverai/vercel-ai-provider";
+import {
+  quiverai,
+  type QuiverAIImageModelOptions,
+} from "@quiverai/vercel-ai-provider";
+
+const { image } = await generateImage({
+  model: quiverai.image("arrow-preview"),
+  prompt: {
+    text: "Generate a geometric unicorn icon",
+    images: [new URL("https://example.com/reference-1.png")],
+  },
+  providerOptions: {
+    quiverai: {
+      instructions: "Use a flat monochrome style with clean geometry.",
+      temperature: 0.4,
+      topP: 0.95,
+      maxOutputTokens: 4096,
+    } satisfies QuiverAIImageModelOptions,
+  },
+});
+
+console.log(new TextDecoder().decode(image.uint8Array));
+```
+
+## Image to SVG Example
+
+```ts
+import fs from "node:fs";
+import { generateImage } from "ai";
+import {
+  quiverai,
+  type QuiverAIImageModelOptions,
+} from "@quiverai/vercel-ai-provider";
 
 const result = await generateImage({
-  model: quiverImage("quiver-image-preview"),
+  model: quiverai.image("arrow-preview"),
   prompt: {
-    images: [await Deno.readFile("./logo.png")],
+    images: [fs.readFileSync("./logo.png")],
   },
   providerOptions: {
     quiverai: {
       operation: "vectorize",
-    },
+      autoCrop: true,
+      targetSize: 1024,
+    } satisfies QuiverAIImageModelOptions,
   },
 });
 ```
 
-The authoritative MIME type is exposed through provider metadata:
+## Configuring Base URL
+
+By default, the provider uses `https://api.quiver.ai/v1`. You can override it:
+
+```ts
+import { createQuiverAI } from "@quiverai/vercel-ai-provider";
+
+const customQuiverAI = createQuiverAI({
+  apiKey: process.env.QUIVERAI_API_KEY,
+  baseURL: "https://api.quiver.ai/v1",
+});
+```
+
+## Example Script
+
+The repo example writes `quiverai-output.svg` in the repo root:
 
 ```bash
 pnpm example:generate-image -- "Generate a simple geometric SVG icon."
 ```
-
-The example writes `quiver-output.svg` in the repo root.
 
 ## Scope
 
@@ -80,3 +149,14 @@ This package intentionally ships the fast-path release surface only:
 
 It does not include the exploratory text or streaming integrations from the
 earlier provider implementation.
+
+## Exports
+
+- `createQuiverAI`
+- `quiverai`
+- `VERSION`
+- `QuiverAIProvider`
+- `QuiverAIProviderSettings`
+- `QuiverAIImageModelId`
+- `QuiverAIAspectRatio`
+- `QuiverAIImageModelOptions`

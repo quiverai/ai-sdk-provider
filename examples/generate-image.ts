@@ -1,20 +1,20 @@
 import { writeFile } from "node:fs/promises";
 import { generateImage } from "ai";
-import { quiverImage } from "../src";
+import { quiverai } from "../src";
 
-const modelId = process.env.QUIVERAI_MODEL_ID ?? "quiver-image-preview";
+const modelId = process.env.QUIVERAI_MODEL_ID ?? "arrow-preview";
 const prompt =
   process.argv.slice(2).join(" ") || "Generate a simple square SVG icon.";
 
 async function main() {
   const result = await generateImage({
-    model: quiverImage(modelId),
+    model: quiverai.image(modelId),
     prompt,
   });
 
-  await writeFile("quiver-output.svg", result.image.uint8Array);
+  await writeFile("quiverai-output.svg", result.image.uint8Array);
 
-  console.log("Wrote quiver-output.svg");
+  console.log("Wrote quiverai-output.svg");
   console.log(
     JSON.stringify(result.providerMetadata?.quiverai?.images ?? [], null, 2),
   );

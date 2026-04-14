@@ -1,4 +1,4 @@
-import { InvalidArgumentError, SharedV3Warning } from "@ai-sdk/provider";
+import { InvalidArgumentError, SharedV4Warning } from "@ai-sdk/provider";
 import {
   createJsonResponseHandler,
   convertUint8ArrayToBase64,
@@ -6,7 +6,7 @@ import {
   postJsonToApi,
 } from "@ai-sdk/provider-utils";
 import { z } from "zod";
-import { QuiverApiConfig } from "./quiverai-config";
+import { QuiverAIConfig } from "./quiverai-config";
 import { quiveraiFailedResponseHandler } from "./quiverai-error";
 import {
   SvgGenerationResponse,
@@ -14,38 +14,65 @@ import {
   svgGenerationResponseSchema,
 } from "./quiverai-api-types";
 
-const quiverImageModelOptionsSchema = z
+export const quiverAIImageModelOptionsSchema = z
   .object({
     operation: z.enum(["generate", "vectorize"]).optional(),
+    instructions: z.string().min(1).optional(),
+    temperature: z.number().min(0).max(2).optional(),
+    topP: z.number().min(0).max(1).optional(),
+    presencePenalty: z.number().min(-2).max(2).nullable().optional(),
+    maxOutputTokens: z.number().int().min(1).max(131072).optional(),
+    autoCrop: z.boolean().optional(),
+    targetSize: z.number().int().min(128).max(4096).optional(),
+    stream: z.boolean().optional(),
   })
   .strict();
+
+export type QuiverAIImageModelOptions = z.infer<
+  typeof quiverAIImageModelOptionsSchema
+>;
 
 type QuiverGenerateBody = {
   model: string;
   n: number;
   prompt: string;
+  stream?: false;
+  instructions?: string;
+  temperature?: number;
+  top_p?: number;
+  presence_penalty?: number | null;
+  max_output_tokens?: number;
+  references?: Array<{ url: string } | { base64: string }>;
 };
 
 type QuiverVectorizeBody = {
   model: string;
   n: number;
   image: { url: string } | { base64: string };
+  stream?: false;
+  temperature?: number;
+  top_p?: number;
+  presence_penalty?: number | null;
+  max_output_tokens?: number;
+  auto_crop?: boolean;
+  target_size?: number;
 };
 
 export type QuiverOperation = "generate" | "vectorize";
 
 export type QuiverRequestBody = QuiverGenerateBody | QuiverVectorizeBody;
 
-export async function parseQuiverImageOptions(providerOptions?: {
+export async function parseQuiverAIImageModelOptions(providerOptions?: {
   [key: string]: unknown;
-}): Promise<{ operation: QuiverOperation }> {
+}): Promise<QuiverAIImageModelOptions & { operation: QuiverOperation }> {
   const options = await parseProviderOptions({
     provider: "quiverai",
     providerOptions,
-    schema: quiverImageModelOptionsSchema,
+    schema: quiverAIImageModelOptionsSchema,
   });
 
   return {
+    ...options,
     operation: options?.operation ?? "generate",
   };
 }
@@ -55,15 +82,33 @@ export function buildRequestBody({
   n,
   prompt,
   files,
-  operation,
+  providerOptions,
 }: {
   modelId: string;
   n: number;
   prompt: string | undefined;
   files: ImageInput[] | undefined;
-  operation: QuiverOperation;
+  providerOptions: QuiverAIImageModelOptions & { operation: QuiverOperation };
 }): QuiverRequestBody {
-  if (operation === "generate") {
+  const sharedOptions = {
+    temperature: providerOptions.temperature,
+    top_p: providerOptions.topP,
+    presence_penalty: providerOptions.presencePenalty,
+    max_output_tokens: providerOptions.maxOutputTokens,
+    ...(providerOptions.stream ? {} : { stream: false as const }),
+  };
+
+  if (providerOptions.operation === "generate") {
+    const references = files?.map(toQuiverAIImageReference);
+
+    if (references != null && references.length > 4) {
+      throw new InvalidArgumentError({
+        argument: "files",
+        message:
+          "QuiverAI generate supports up to 4 reference images in this provider.",
+      });
+    }
+
     if (prompt == null || prompt.trim().length === 0) {
       throw new InvalidArgumentError({
         argument: "prompt",
@@ -76,6 +121,9 @@ export function buildRequestBody({
       model: modelId,
       n,
       prompt,
+      ...sharedOptions,
+      instructions: providerOptions.instructions,
+      references,
     };
   }
 
@@ -100,16 +148,22 @@ export function buildRequestBody({
   return {
     model: modelId,
     n,
-    image:
-      image.type === "url"
-        ? { url: image.url }
-        : {
-            base64:
-              typeof image.data === "string"
-                ? image.data
-                : convertUint8ArrayToBase64(image.data),
-          },
+    image: toQuiverAIImageReference(image),
+    ...sharedOptions,
+    auto_crop: providerOptions.autoCrop,
+    target_size: providerOptions.targetSize,
   };
+}
+
+function toQuiverAIImageReference(image: ImageInput) {
+  return image.type === "url"
+    ? { url: image.url }
+    : {
+        base64:
+          typeof image.data === "string"
+            ? image.data
+            : convertUint8ArrayToBase64(image.data),
+      };
 }
 
 type ImageInput =
@@ -135,7 +189,7 @@ export async function postGenerateRequest({
   abortSignal,
   operation,
 }: {
-  config: QuiverApiConfig;
+  config: QuiverAIConfig;
   body: QuiverRequestBody;
   headers?: Record<string, string | undefined>;
   abortSignal?: AbortSignal;
@@ -159,13 +213,15 @@ export function collectWarnings({
   aspectRatio,
   seed,
   mask,
+  stream,
 }: {
   size: `${number}x${number}` | undefined;
   aspectRatio: `${number}:${number}` | undefined;
   seed: number | undefined;
   mask: unknown;
-}): SharedV3Warning[] {
-  const warnings: SharedV3Warning[] = [];
+  stream: boolean | undefined;
+}): SharedV4Warning[] {
+  const warnings: SharedV4Warning[] = [];
 
   if (size != null) {
     warnings.push({
@@ -200,6 +256,15 @@ export function collectWarnings({
       feature: "mask",
       details:
         "QuiverAI SVG generation does not support masks in this provider. The mask was ignored.",
+    });
+  }
+
+  if (stream) {
+    warnings.push({
+      type: "unsupported",
+      feature: "stream",
+      details:
+        "QuiverAI streaming responses are not exposed through this generateImage provider. The request was executed in non-streaming mode.",
     });
   }
 

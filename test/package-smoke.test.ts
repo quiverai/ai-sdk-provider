@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import { createTestServer } from "@ai-sdk/test-server/with-vitest";
 import { describe, expect, it } from "vitest";
 import { generateSvgResponseFixture } from "../src/__fixtures__/quiverai-fixtures";
@@ -18,8 +19,10 @@ void server;
 
 describe("dist smoke", () => {
   it("supports the published ESM and CJS entrypoints", async () => {
-    const esm = await import("../dist/index.js");
-    const cjs = require("../dist/index.cjs");
+    const esm = await import(new URL("../dist/index.js", import.meta.url).href);
+    const cjs = require(
+      fileURLToPath(new URL("../dist/index.cjs", import.meta.url)),
+    );
 
     const esmProvider = esm.createQuiverAI({ apiKey: "test-api-key", fetch });
     const cjsProvider = cjs.createQuiverAI({ apiKey: "test-api-key", fetch });

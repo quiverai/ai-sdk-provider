@@ -217,6 +217,39 @@ describe("createQuiverAI", () => {
     });
   });
 
+  it("accepts up to 16 reference images for arrow-1.1-max", async () => {
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
+
+    await provider.image("arrow-1.1-max").doGenerate({
+      ...generateOptions,
+      files: Array.from({ length: 16 }, (_, index) => ({
+        type: "url" as const,
+        url: `https://example.com/reference-${index + 1}.png`,
+      })),
+    });
+
+    const requestBody = await server.calls[0].requestBodyJson;
+
+    expect(requestBody).toMatchObject({
+      model: "arrow-1.1-max",
+    });
+    expect(requestBody.references).toHaveLength(16);
+  });
+
+  it("rejects more than 16 reference images for arrow-1.1-max", async () => {
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
+
+    await expect(
+      provider.image("arrow-1.1-max").doGenerate({
+        ...generateOptions,
+        files: Array.from({ length: 17 }, (_, index) => ({
+          type: "url" as const,
+          url: `https://example.com/reference-${index + 1}.png`,
+        })),
+      }),
+    ).rejects.toBeInstanceOf(InvalidArgumentError);
+  });
+
   it("forwards docs-backed vectorize options", async () => {
     const provider = createQuiverAI({ apiKey: "test-api-key" });
 

@@ -101,12 +101,12 @@ export function buildRequestBody({
 
   if (providerOptions.operation === "generate") {
     const references = files?.map(toQuiverAIImageReference);
+    const maxReferences = getGenerateReferenceLimit(modelId);
 
-    if (references != null && references.length > 4) {
+    if (references != null && references.length > maxReferences) {
       throw new InvalidArgumentError({
         argument: "files",
-        message:
-          "QuiverAI generate supports up to 4 reference images in this provider.",
+        message: `QuiverAI generate supports up to ${maxReferences} reference images for model "${modelId}" in this provider.`,
       });
     }
 
@@ -181,6 +181,10 @@ function getOperationPath(operation: QuiverOperation) {
   return operation === "generate"
     ? "/svgs/generations"
     : "/svgs/vectorizations";
+}
+
+function getGenerateReferenceLimit(modelId: string) {
+  return modelId === "arrow-1.1-max" ? 16 : 4;
 }
 
 export async function postGenerateRequest({

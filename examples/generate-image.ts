@@ -2,7 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { generateImage } from "ai";
 import { quiverai } from "../src";
 
-const modelId = process.env.QUIVERAI_MODEL_ID ?? "arrow-preview";
+const modelId = process.env.QUIVERAI_MODEL_ID ?? "arrow-1.1";
 const prompt =
   process.argv.slice(2).join(" ") || "Generate a simple square SVG icon.";
 

@@ -34,13 +34,15 @@
     "fmt": "prettier --write \"./**/*.{ts,tsx,js,json,md}\"",
     "fmt:check": "prettier --check \"./**/*.{ts,tsx,js,json,md}\"",
     "lint": "eslint \"./**/*.ts\" \"./**/*.js\"",
-    "qa": "pnpm fmt:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "qa": "pnpm fmt:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:dist",
     "typecheck": "tsc --build",
     "type-check": "pnpm typecheck",
     "test": "pnpm test:node && pnpm test:edge && pnpm test:e2e",
+    "test:dist": "vitest --config vitest.dist.config.js --run",
     "test:node": "vitest --config vitest.node.config.js --run",
     "test:edge": "vitest --config vitest.edge.config.js --run",
     "test:e2e": "vitest --config vitest.node.config.js --run test/e2e",
+    "test:smoke:live": "vitest --config vitest.node.config.js --run test/smoke/live-api.test.ts",
     "test:watch": "vitest --config vitest.node.config.js"
   },
   "dependencies": {

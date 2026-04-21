@@ -1,6 +1,7 @@
 import {
   ImageModelV4CallOptions,
   InvalidArgumentError,
+  LoadAPIKeyError,
   NoSuchModelError,
 } from "@ai-sdk/provider";
 import { createTestServer } from "@ai-sdk/test-server/with-vitest";
@@ -12,6 +13,7 @@ import {
 import { createQuiverAI } from "./quiverai-provider";
 
 const decoder = new TextDecoder();
+const canonicalModelIds = ["arrow-1", "arrow-1.1", "arrow-1.1-max"] as const;
 
 const server = createTestServer({
   "https://api.quiver.ai/v1/svgs/generations": {
@@ -58,9 +60,7 @@ describe("createQuiverAI", () => {
 
   it("uses the default base URL and auth headers", async () => {
     const provider = createQuiverAI({ apiKey: "test-api-key" });
-    const result = await provider
-      .image("arrow-preview")
-      .doGenerate(generateOptions);
+    const result = await provider.image("arrow-1").doGenerate(generateOptions);
     const image = result.images[0];
 
     expect(result.images).toHaveLength(1);
@@ -92,7 +92,7 @@ describe("createQuiverAI", () => {
     vi.stubEnv("QUIVERAI_BASE_URL", "https://env.quiver.ai/v1");
 
     const provider = createQuiverAI();
-    await provider.imageModel("arrow-preview").doGenerate(generateOptions);
+    await provider.imageModel("arrow-1").doGenerate(generateOptions);
 
     expect(server.calls).toHaveLength(1);
     expect(server.calls[0].requestUrl).toBe(
@@ -100,6 +100,17 @@ describe("createQuiverAI", () => {
     );
     expect(server.calls[0].requestHeaders.authorization).toBe(
       "Bearer env-api-key",
+    );
+  });
+
+  it("throws when the QuiverAI API key is missing", async () => {
+    const provider = createQuiverAI();
+
+    const result = provider.image("arrow-1").doGenerate(generateOptions);
+
+    await expect(result).rejects.toBeInstanceOf(LoadAPIKeyError);
+    await expect(result).rejects.toThrow(
+      "QuiverAI API key is missing. Pass it using the 'apiKey' parameter or the QUIVERAI_API_KEY environment variable.",
     );
   });
 
@@ -113,12 +124,10 @@ describe("createQuiverAI", () => {
       headers: { "X-QuiverAI-Test": "1" },
     });
 
-    expect(provider.image("arrow-preview").modelId).toBe("arrow-preview");
-    expect(provider.imageModel("arrow-preview").provider).toBe(
-      "quiverai.image",
-    );
+    expect(provider.image("arrow-1").modelId).toBe("arrow-1");
+    expect(provider.imageModel("arrow-1").provider).toBe("quiverai.image");
 
-    await provider.image("arrow-preview").doGenerate(generateOptions);
+    await provider.image("arrow-1").doGenerate(generateOptions);
 
     expect(server.calls[0].requestUrl).toBe(
       "https://override.quiver.ai/v1/svgs/generations",
@@ -143,9 +152,31 @@ describe("createQuiverAI", () => {
     );
   });
 
+  it("supports all canonical Quiver model ids", async () => {
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
+
+    for (const modelId of canonicalModelIds) {
+      expect(provider.image(modelId).modelId).toBe(modelId);
+      expect(provider.imageModel(modelId).modelId).toBe(modelId);
+      expect(provider.image(modelId).provider).toBe("quiverai.image");
+
+      const result = await provider.image(modelId).doGenerate(generateOptions);
+
+      expect(decoder.decode(result.images[0] as Uint8Array)).toBe(
+        generateSvgResponseFixture.data[0].svg,
+      );
+      expect(result.response.modelId).toBe(modelId);
+    }
+
+    expect(server.calls).toHaveLength(canonicalModelIds.length);
+    expect(
+      await Promise.all(server.calls.map((call) => call.requestBodyJson)),
+    ).toMatchObject(canonicalModelIds.map((modelId) => ({ model: modelId })));
+  });
+
   it("vectorizes an image when requested through providerOptions", async () => {
     const provider = createQuiverAI({ apiKey: "test-api-key" });
-    const result = await provider.image("arrow-preview").doGenerate({
+    const result = await provider.image("arrow-1").doGenerate({
       ...generateOptions,
       prompt: undefined,
       files: [
@@ -165,7 +196,7 @@ describe("createQuiverAI", () => {
       "https://api.quiver.ai/v1/svgs/vectorizations",
     );
     expect(await server.calls[0].requestBodyJson).toMatchObject({
-      model: "arrow-preview",
+      model: "arrow-1",
       n: 1,
       image: {
         base64: "AQID",
@@ -176,7 +207,7 @@ describe("createQuiverAI", () => {
   it("forwards docs-backed generation options and reference images", async () => {
     const provider = createQuiverAI({ apiKey: "test-api-key" });
 
-    await provider.image("arrow-preview").doGenerate({
+    await provider.image("arrow-1").doGenerate({
       ...generateOptions,
       files: [
         {
@@ -202,7 +233,7 @@ describe("createQuiverAI", () => {
     });
 
     expect(await server.calls[0].requestBodyJson).toMatchObject({
-      model: "arrow-preview",
+      model: "arrow-1",
       prompt: "Draw a square icon.",
       instructions: "Use a flat monochrome style with clean geometry.",
       temperature: 0.4,
@@ -217,10 +248,43 @@ describe("createQuiverAI", () => {
     });
   });
 
+  it("accepts up to 16 reference images for arrow-1.1-max", async () => {
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
+
+    await provider.image("arrow-1.1-max").doGenerate({
+      ...generateOptions,
+      files: Array.from({ length: 16 }, (_, index) => ({
+        type: "url" as const,
+        url: `https://example.com/reference-${index + 1}.png`,
+      })),
+    });
+
+    const requestBody = await server.calls[0].requestBodyJson;
+
+    expect(requestBody).toMatchObject({
+      model: "arrow-1.1-max",
+    });
+    expect(requestBody.references).toHaveLength(16);
+  });
+
+  it("rejects more than 16 reference images for arrow-1.1-max", async () => {
+    const provider = createQuiverAI({ apiKey: "test-api-key" });
+
+    await expect(
+      provider.image("arrow-1.1-max").doGenerate({
+        ...generateOptions,
+        files: Array.from({ length: 17 }, (_, index) => ({
+          type: "url" as const,
+          url: `https://example.com/reference-${index + 1}.png`,
+        })),
+      }),
+    ).rejects.toBeInstanceOf(InvalidArgumentError);
+  });
+
   it("forwards docs-backed vectorize options", async () => {
     const provider = createQuiverAI({ apiKey: "test-api-key" });
 
-    await provider.image("arrow-preview").doGenerate({
+    await provider.image("arrow-1").doGenerate({
       ...generateOptions,
       prompt: undefined,
       files: [
@@ -243,7 +307,7 @@ describe("createQuiverAI", () => {
     });
 
     expect(await server.calls[0].requestBodyJson).toMatchObject({
-      model: "arrow-preview",
+      model: "arrow-1",
       image: {
         url: "https://example.com/logo.png",
       },
@@ -261,7 +325,7 @@ describe("createQuiverAI", () => {
     const provider = createQuiverAI({ apiKey: "test-api-key" });
 
     await expect(
-      provider.image("arrow-preview").doGenerate({
+      provider.image("arrow-1").doGenerate({
         ...generateOptions,
         prompt: undefined,
         providerOptions: { quiverai: { operation: "vectorize" } },

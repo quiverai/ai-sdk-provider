@@ -27,7 +27,7 @@ export QUIVERAI_API_KEY=your_api_key
 Optional environment variables:
 
 - `QUIVERAI_BASE_URL` to override the default `https://api.quiver.ai/v1`
-- `QUIVERAI_MODEL_ID` to override the default example model `arrow-preview`
+- `QUIVERAI_MODEL_ID` to override the default example model `arrow-1.1`
 
 ## Provider Instance
 
@@ -45,7 +45,7 @@ import { generateImage } from "ai";
 import { quiverai } from "@quiverai/vercel-ai-provider";
 
 const { image } = await generateImage({
-  model: quiverai.image("arrow-preview"),
+  model: quiverai.image("arrow-1.1"),
   prompt: "A logo for the next AI Design startup",
 });
 
@@ -66,7 +66,8 @@ and image-to-SVG requests. You can pass them through
 - `instructions`: extra style guidance for prompt-based generation
 - `temperature`, `topP`, `presencePenalty`, `maxOutputTokens`
 - `autoCrop`, `targetSize` for vectorization
-- `prompt.images`: up to 4 reference images for prompt-based generation
+- `prompt.images`: up to 4 references for `arrow-1` / `arrow-1.1`, and up to
+  16 for `arrow-1.1-max`
 
 ```ts
 import { generateImage } from "ai";
@@ -76,7 +77,7 @@ import {
 } from "@quiverai/vercel-ai-provider";
 
 const { image } = await generateImage({
-  model: quiverai.image("arrow-preview"),
+  model: quiverai.image("arrow-1.1"),
   prompt: {
     text: "Generate a geometric unicorn icon",
     images: [new URL("https://example.com/reference-1.png")],
@@ -105,7 +106,7 @@ import {
 } from "@quiverai/vercel-ai-provider";
 
 const result = await generateImage({
-  model: quiverai.image("arrow-preview"),
+  model: quiverai.image("arrow-1.1"),
   prompt: {
     images: [fs.readFileSync("./logo.png")],
   },

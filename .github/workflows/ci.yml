@@ -64,18 +64,39 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run real QuiverAI smoke tests
+        run: pnpm test:smoke:live
+        env:
+          QUIVERAI_LIVE_SMOKE: "1"
+          QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
+          QUIVERAI_SMOKE_MODEL_ID: arrow-1.1
+
+      - name: Upload smoke SVG artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: quiver-smoke-svg
+          path: /tmp/quiver-smoke.svg
+          if-no-files-found: warn
+
+      - name: Summarize smoke output
+        if: ${{ always() }}
         shell: bash
         run: |
-          if [ -z "$QUIVERAI_API_KEY" ]; then
-            echo "QUIVERAI_API_KEY is not configured; skipping real QuiverAI smoke tests."
-            exit 0
-          fi
-
-          pnpm test:e2e
-        env:
-          RUN_REAL_API_SMOKE_TEST: "true"
-          QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
-          QUIVERAI_MODEL_ID: arrow-preview
+          {
+            echo "## Real API Smoke Output"
+            if [ -f /tmp/quiver-smoke.svg ]; then
+              echo
+              echo "Generated SVG artifact: \`quiver-smoke-svg\`"
+              echo
+              echo "First lines:"
+              echo '```svg'
+              head -n 5 /tmp/quiver-smoke.svg
+              echo '```'
+            else
+              echo
+              echo "No SVG artifact was produced in this run."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   examples:
     name: Examples
@@ -120,10 +141,7 @@ jobs:
             exit 0
           fi
 
-          pnpm exec tsx examples/generate-text.ts "Generate a simple geometric SVG icon."
-          pnpm exec tsx examples/stream-text.ts "Generate a simple geometric SVG icon."
-          pnpm exec tsx examples/multi-output.ts "Generate two simple SVG icon variations."
-          pnpm exec tsx examples/vectorize-file.ts /tmp/quiverai-example.png
+          pnpm exec tsx examples/generate-image.ts "Generate a simple geometric SVG icon."
         env:
           QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
-          QUIVERAI_MODEL_ID: arrow-preview
+          QUIVERAI_MODEL_ID: arrow-1.1

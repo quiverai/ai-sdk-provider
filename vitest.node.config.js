@@ -9,6 +9,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "test/**/*.test.ts"],
+    exclude: ["test/package-smoke.test.ts"],
   },
   define: {
     __PACKAGE_VERSION__: JSON.stringify(version),

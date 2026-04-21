@@ -70,6 +70,34 @@ jobs:
           QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
           QUIVERAI_SMOKE_MODEL_ID: arrow-1
 
+      - name: Upload smoke SVG artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: quiver-smoke-svg
+          path: /tmp/quiver-smoke.svg
+          if-no-files-found: warn
+
+      - name: Summarize smoke output
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          {
+            echo "## Real API Smoke Output"
+            if [ -f /tmp/quiver-smoke.svg ]; then
+              echo
+              echo "Generated SVG artifact: \`quiver-smoke-svg\`"
+              echo
+              echo "First lines:"
+              echo '```svg'
+              head -n 5 /tmp/quiver-smoke.svg
+              echo '```'
+            else
+              echo
+              echo "No SVG artifact was produced in this run."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
   examples:
     name: Examples
     needs: qa

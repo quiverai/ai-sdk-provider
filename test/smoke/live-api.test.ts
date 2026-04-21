@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import { generateImage } from "ai";
 import { describe, expect, it } from "vitest";
 import { createQuiverAI } from "../../src";
@@ -20,6 +21,8 @@ describe.skipIf(!runLiveSmoke)("live Quiver smoke", () => {
     });
 
     const svg = new TextDecoder().decode(result.image.uint8Array);
+
+    await writeFile("/tmp/quiver-smoke.svg", svg, "utf8");
 
     expect(svg).toContain("<svg");
     expect(result.providerMetadata.quiverai.images).toEqual([

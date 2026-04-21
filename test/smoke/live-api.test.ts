@@ -4,7 +4,7 @@ import { createQuiverAI } from "../../src";
 
 const runLiveSmoke = process.env.QUIVERAI_LIVE_SMOKE === "1";
 
-if (runLiveSmoke && process.env.QUIVERAI_API_KEY == null) {
+if (runLiveSmoke && !process.env.QUIVERAI_API_KEY) {
   throw new Error("QUIVERAI_LIVE_SMOKE=1 requires QUIVERAI_API_KEY to be set.");
 }
 

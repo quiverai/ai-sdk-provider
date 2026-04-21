@@ -1,6 +1,7 @@
 import {
   ImageModelV4CallOptions,
   InvalidArgumentError,
+  LoadAPIKeyError,
   NoSuchModelError,
 } from "@ai-sdk/provider";
 import { createTestServer } from "@ai-sdk/test-server/with-vitest";
@@ -99,6 +100,17 @@ describe("createQuiverAI", () => {
     );
     expect(server.calls[0].requestHeaders.authorization).toBe(
       "Bearer env-api-key",
+    );
+  });
+
+  it("throws when the QuiverAI API key is missing", async () => {
+    const provider = createQuiverAI();
+
+    const result = provider.image("arrow-1").doGenerate(generateOptions);
+
+    await expect(result).rejects.toBeInstanceOf(LoadAPIKeyError);
+    await expect(result).rejects.toThrow(
+      "QuiverAI API key is missing. Pass it using the 'apiKey' parameter or the QUIVERAI_API_KEY environment variable.",
     );
   });
 

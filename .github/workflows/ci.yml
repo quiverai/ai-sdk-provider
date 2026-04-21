@@ -113,10 +113,7 @@ jobs:
             exit 0
           fi
 
-          pnpm exec tsx examples/generate-text.ts "Generate a simple geometric SVG icon."
-          pnpm exec tsx examples/stream-text.ts "Generate a simple geometric SVG icon."
-          pnpm exec tsx examples/multi-output.ts "Generate two simple SVG icon variations."
-          pnpm exec tsx examples/vectorize-file.ts /tmp/quiverai-example.png
+          pnpm exec tsx examples/generate-image.ts "Generate a simple geometric SVG icon."
         env:
           QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
-          QUIVERAI_MODEL_ID: arrow-preview
+          QUIVERAI_MODEL_ID: arrow-1

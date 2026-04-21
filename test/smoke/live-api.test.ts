@@ -28,5 +28,5 @@ describe.skipIf(!runLiveSmoke)("live Quiver smoke", () => {
     expect(result.responses[0].modelId).toBe(
       process.env.QUIVERAI_SMOKE_MODEL_ID ?? "arrow-1",
     );
-  }, 30_000);
+  }, 90_000);
 });

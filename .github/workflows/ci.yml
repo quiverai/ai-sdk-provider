@@ -68,7 +68,7 @@ jobs:
         env:
           QUIVERAI_LIVE_SMOKE: "1"
           QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
-          QUIVERAI_SMOKE_MODEL_ID: arrow-1
+          QUIVERAI_SMOKE_MODEL_ID: arrow-1.1
 
       - name: Upload smoke SVG artifact
         if: ${{ always() }}
@@ -144,4 +144,4 @@ jobs:
           pnpm exec tsx examples/generate-image.ts "Generate a simple geometric SVG icon."
         env:
           QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
-          QUIVERAI_MODEL_ID: arrow-1
+          QUIVERAI_MODEL_ID: arrow-1.1

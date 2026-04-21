@@ -27,7 +27,7 @@ export QUIVERAI_API_KEY=your_api_key
 Optional environment variables:
 
 - `QUIVERAI_BASE_URL` to override the default `https://api.quiver.ai/v1`
-- `QUIVERAI_MODEL_ID` to override the default example model `arrow-1`
+- `QUIVERAI_MODEL_ID` to override the default example model `arrow-1.1`
 
 ## Provider Instance
 
@@ -45,7 +45,7 @@ import { generateImage } from "ai";
 import { quiverai } from "@quiverai/vercel-ai-provider";
 
 const { image } = await generateImage({
-  model: quiverai.image("arrow-1"),
+  model: quiverai.image("arrow-1.1"),
   prompt: "A logo for the next AI Design startup",
 });
 
@@ -77,7 +77,7 @@ import {
 } from "@quiverai/vercel-ai-provider";
 
 const { image } = await generateImage({
-  model: quiverai.image("arrow-1"),
+  model: quiverai.image("arrow-1.1"),
   prompt: {
     text: "Generate a geometric unicorn icon",
     images: [new URL("https://example.com/reference-1.png")],
@@ -106,7 +106,7 @@ import {
 } from "@quiverai/vercel-ai-provider";
 
 const result = await generateImage({
-  model: quiverai.image("arrow-1"),
+  model: quiverai.image("arrow-1.1"),
   prompt: {
     images: [fs.readFileSync("./logo.png")],
   },

@@ -19,7 +19,7 @@ describe("quiveraiFailedResponseHandler", () => {
 
     const { value } = await quiveraiFailedResponseHandler({
       url: "https://api.quiver.ai/v1/svgs/generations",
-      requestBodyValues: { model: "arrow-preview" },
+      requestBodyValues: { model: "arrow-1" },
       response,
     });
 
@@ -49,7 +49,7 @@ describe("quiveraiFailedResponseHandler", () => {
 
     const { value } = await quiveraiFailedResponseHandler({
       url: "https://api.quiver.ai/v1/svgs/generations",
-      requestBodyValues: { model: "arrow-preview" },
+      requestBodyValues: { model: "arrow-1" },
       response,
     });
 

@@ -1,3 +1,4 @@
+import { APICallError } from "@ai-sdk/provider";
 import { createTestServer } from "@ai-sdk/test-server/with-vitest";
 import { generateImage } from "ai";
 import { describe, expect, it } from "vitest";
@@ -77,5 +78,35 @@ describe("generateImage e2e", () => {
       outputTokens: 7,
       totalTokens: 18,
     });
+  });
+
+  it("surfaces Quiver API failures through the generateImage integration path", async () => {
+    const errorFetch: typeof fetch = async () =>
+      new Response(
+        JSON.stringify({
+          status: 400,
+          code: "bad_request",
+          message: "Prompt is invalid.",
+          request_id: "req_e2e_1",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+
+    const provider = createQuiverAI({
+      apiKey: "test-api-key",
+      baseURL: "https://error.quiver.ai/v1",
+      fetch: errorFetch,
+    });
+
+    const result = generateImage({
+      model: provider.image("arrow-1"),
+      prompt: "Draw a square icon.",
+    });
+
+    await expect(result).rejects.toBeInstanceOf(APICallError);
+    await expect(result).rejects.toThrow("Prompt is invalid.");
   });
 });

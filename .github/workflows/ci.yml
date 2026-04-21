@@ -64,18 +64,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run real QuiverAI smoke tests
-        shell: bash
-        run: |
-          if [ -z "$QUIVERAI_API_KEY" ]; then
-            echo "QUIVERAI_API_KEY is not configured; skipping real QuiverAI smoke tests."
-            exit 0
-          fi
-
-          pnpm test:e2e
+        run: pnpm test:smoke:live
         env:
-          RUN_REAL_API_SMOKE_TEST: "true"
+          QUIVERAI_LIVE_SMOKE: "1"
           QUIVERAI_API_KEY: ${{ secrets.QUIVERAI_API_KEY }}
-          QUIVERAI_MODEL_ID: arrow-preview
+          QUIVERAI_SMOKE_MODEL_ID: arrow-1
 
   examples:
     name: Examples

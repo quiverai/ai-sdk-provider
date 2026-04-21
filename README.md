@@ -15,7 +15,7 @@ The QuiverAI provider is available in the `@quiverai/vercel-ai-provider`
 module:
 
 ```bash
-pnpm add @quiverai/vercel-ai-provider ai
+pnpm add @quiverai/vercel-ai-provider ai@beta
 ```
 
 Set your QuiverAI API key:
